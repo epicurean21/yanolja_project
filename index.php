@@ -2,11 +2,11 @@
 require './pdos/DatabasePdo.php';
 require './pdos/IndexPdo.php';
 require './pdos/WoodiePdo.php';
+require './pdos/AccomPdo.php';
 require './vendor/autoload.php';
 
 use \Monolog\Logger as Logger;
 use Monolog\Handler\StreamHandler;
-
 date_default_timezone_set('Asia/Seoul');
 ini_set('default_charset', 'utf8mb4');
 
@@ -22,7 +22,10 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('POST', '/test', ['IndexController', 'testPost']);
     $r->addRoute('GET', '/jwt', ['MainController', 'validateJwt']);
     $r->addRoute('POST', '/jwt', ['MainController', 'createJwt']);
+    $r->addRoute('POST', '/users', ['IndexController', 'createUser']);
 
+    $r->addRoute('GET', '/hotels', ['IndexController', 'index']);
+    $r->addRoute('GET', '/area/{RegionGroupIdx}', ['AccomController', 'searchAccomByArea']);
 
 //    $r->addRoute('GET', '/users', 'get_all_users_handler');
 //    // {id} must be a number (\d+)
@@ -75,21 +78,21 @@ switch ($routeInfo[0]) {
                 $vars = $routeInfo[2];
                 require './controllers/IndexController.php';
                 break;
+            case 'AccomController':
+                $handler = $routeInfo[1][1];
+                $vars = $routeInfo[2];
+                require './controllers/AccomController.php';
+                break;
+            case 'WoodieController':
+                $handler = $routeInfo[1][1]; $vars = $routeInfo[2];
+                require './controllers/WoodieController.php';
+                break;
             case 'MainController':
                 $handler = $routeInfo[1][1];
                 $vars = $routeInfo[2];
                 require './controllers/MainController.php';
                 break;
-            case 'IndexControllerJeremih':
-                $handler = $routeInfo[1][1];
-                $vars = $routeInfo[2];
-                require './controllers/IndexControllerJeremih.php';
-                break;
-            /*case 'EventController':
-                $handler = $routeInfo[1][1]; $vars = $routeInfo[2];
-                require './controllers/EventController.php';
-                break;
-            case 'ProductController':
+            /*case 'ProductController':
                 $handler = $routeInfo[1][1]; $vars = $routeInfo[2];
                 require './controllers/ProductController.php';
                 break;
