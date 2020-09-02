@@ -11,6 +11,12 @@ function keyCheck($key, $arr){
         exit;
     }
 }
+function isMember(){
+    if(array_key_exists('HTTP_X_ACCESS_TOKEN', $_SERVER))
+        return true;
+    else
+        return false;
+}
 
 
 
