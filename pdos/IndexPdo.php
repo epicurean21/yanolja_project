@@ -17,6 +17,14 @@ function isMember(){
     else
         return false;
 }
+function parsingDate($date){
+
+    $year = substr($date, 0,4);
+    $month = substr($date, 4,2);
+    $day = substr($date, 6,2);
+
+    return $year.'-'.$month.'-'.$day;
+}
 
 
 
@@ -103,16 +111,37 @@ function isValidUserId($id){
     return intval($res[0]["exist"]);
 }
 
-
-//CREATE
-function createUser($UserId, $UserPwd, $UserEmail, $UserName, $UserBirth, $UserContact, $UserGender){
+function getMotelList(){
     $pdo = pdoSqlConnect();
-    $query = "INSERT INTO yanolja_test.User (UserId, UserPwd, UserEmail, UserName, UserBirth, UserContact, UserGender,
-                               UserPoint, CreatedAt, UpdatedAt, isDeleted)
-VALUES (?, ?, ?, ?, ?, ?, ?, default, '2020-08-31 15:34:06', '2020-08-31 15:38:31', 'N')";
+    $query = "  
+                select CityName, RegionGroupName, RegionName
+                from RegionGroupName
+                        join RegionGroup on RegionGroupName.RegionGroupIdx = RegionGroup.RegionGroupIdx
+                        join City on City.RegionGroupIdx = RegionGroupName.RegionGroupIdx;
+    ";
 
     $st = $pdo->prepare($query);
-    $st->execute([$UserId, $UserPwd, $UserEmail, $UserName, $UserBirth, $UserContact, $UserGender]);
+    //    $st->execute([$param,$param]);
+    $st->execute();
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st=null;
+    $pdo = null;
+
+    return $res;
+}
+
+
+//CREATE
+function createUser($UserId, $UserPwd, $UserName, $UserBirth, $UserContact, $UserGender){
+    $pdo = pdoSqlConnect();
+    $query = "INSERT INTO yanolja_test.User (UserId, UserPwd, UserName, UserBirth, UserContact, UserGender,
+                               UserPoint, CreatedAt, UpdatedAt, isDeleted)
+VALUES (?, ?, ?, ?, ?, ?, default, default, default, default)";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$UserId, $UserPwd, $UserName, $UserBirth, $UserContact, $UserGender]);
 
     $st = null;
     $pdo = null;

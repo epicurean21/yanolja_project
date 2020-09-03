@@ -74,17 +74,17 @@ function getTodayByTimeStamp()
     return date("Y-m-d H:i:s");
 }
 
-function getTomorrowTimeStamp()
+/*function getTomorrowTimeStamp()
 {
     return date("Y-m-d H:i:s", strtotime("+1 days"));
-}
+}*/
 
-/*
+
 function getJWToken($id, $pw, $secretKey)
 {
     $data = array(
-        'DefaultStartDate' => (string)getTodayByTimeStamp(),
-        'DefaultEndDate' => (string)getTomorrowTimeStamp(),
+        'date' => (string)getTodayByTimeStamp(),
+        //'DefaultEndDate' => (string)getTomorrowTimeStamp(),
         'id' => (string)$id,
         'pw' => (string)$pw
     );
@@ -97,9 +97,28 @@ function getJWToken($id, $pw, $secretKey)
 //    $decoded = JWT::decode($jwt, $secretKey, array('HS256'))
 //    print_r($decoded);
 }
-*/
 
-function getDateJWToken($startDate, $endDate, $adult, $child, $id, $pw, $secretKey)
+/*
+function getFreeJWToken($startDate, $endDate, $adult, $child, $secretKey)
+{
+    $data = array(
+        'startDate' => (string)parsingDate($startDate),
+        'endDate' => (string)parsingDate($endDate),
+        'adult' => (string)$adult,
+        'child' => (string)$child
+    );
+
+//    echo json_encode($data);
+
+    return $jwt = JWT::encode($data, $secretKey);
+
+//    echo "encoded jwt: " . $jwt . "n";
+//    $decoded = JWT::decode($jwt, $secretKey, array('HS256'))
+//    print_r($decoded);
+}
+
+
+function getJWToken($startDate, $endDate, $adult, $child, $id, $pw, $secretKey)
 {
     $data = array(
         'startDate' => (string)parsingDate($startDate),
@@ -118,15 +137,7 @@ function getDateJWToken($startDate, $endDate, $adult, $child, $id, $pw, $secretK
 //    $decoded = JWT::decode($jwt, $secretKey, array('HS256'))
 //    print_r($decoded);
 }
-
-function parsingDate($date){
-
-    $checkOutYear = substr($date, 0,4);
-    $checkOutMonth = substr($date, 4,2);
-    $checkOutDay = substr($date, 6,2);
-
-    return $checkOutYear.'-'.$checkOutMonth.'-'.$checkOutDay;
-}
+*/
 
 function getDataByJWToken($jwt, $secretKey)
 {

@@ -44,35 +44,22 @@ try {
 
             http_response_code(200);
 
-            // jwt 유효성 검사
-            if(!isValidUser($req->id, $req->pw)){
+            // 유저 정보 유효성 검사
+            if (!isValidUser($req->id, $req->pw)) {
                 $res->isSuccess = FALSE;
-                $res->code = 100;
+                $res->code = 200;
                 $res->message = "유효하지 않은 토큰입니다.";
                 echo json_encode($res, JSON_NUMERIC_CHECK);
                 return;
             }
 
-            //if(array_key_exists('startDate', $req) && array_key_exists('endDate', $req)){
-                $jwt = getJWToken($req->startDate, $req->endDate, $req->adult, $req->child, $req->id, $req->pw, JWT_SECRET_KEY);
-                $res->result->jwt = $jwt;
-                $res->isSuccess = TRUE;
-                $res->code = 100;
-                $res->message = "토큰 발급 성공";
-                echo json_encode($res, JSON_NUMERIC_CHECK);
-                return;
-            //}
-
-            /*/페이로드에 맞게 다시 설정 요함
             $jwt = getJWToken($req->id, $req->pw, JWT_SECRET_KEY);
-            $res->result->jwt = $jwt;
+            $res->jwt = $jwt;
             $res->isSuccess = TRUE;
             $res->code = 100;
-            $res->message = "앱 첫 실행시 토큰 발급 성공";
+            $res->message = "회원용 토큰 발급 성공";
             echo json_encode($res, JSON_NUMERIC_CHECK);
-            */
-
-            break;
+            return;
     }
 } catch (\Exception $e) {
     return getSQLErrorException($errorLogs, $e, $req);

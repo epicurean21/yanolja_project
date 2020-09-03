@@ -5,15 +5,13 @@ require './pdos/WoodiePdo.php';
 require './pdos/AccomPdo.php';
 require './vendor/autoload.php';
 
-//test
-
 use \Monolog\Logger as Logger;
 use Monolog\Handler\StreamHandler;
 date_default_timezone_set('Asia/Seoul');
 ini_set('default_charset', 'utf8mb4');
 
 //에러출력하게 하는 코드
-//error_reporting(E_ALL); ini_set("display_errors", 1);
+error_reporting(E_ALL); ini_set("display_errors", 1);
 
 //Main Server API
 $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) {
@@ -29,8 +27,8 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('POST', '/users', ['IndexController', 'createUser']);
 
     $r->addRoute('GET', '/hotels', ['IndexController', 'index']);
-    $r->addRoute('GET', '/motel-groups/{RegionGroupIdx}', ['AccomController', 'searchMotelByArea']);
-    $r->addRoute('GET', '/hotels/{RegionGroupIdx}', ['AccomController', 'searchHotelByArea']);
+//    $r->addRoute('GET', '/motels', ['AccomController', 'searchMotelByArea']);
+//    $r->addRoute('GET', '/hotels', ['AccomController', 'searchHotelByArea']);
 
 //    $r->addRoute('GET', '/users', 'get_all_users_handler');
 //    // {id} must be a number (\d+)
@@ -83,11 +81,11 @@ switch ($routeInfo[0]) {
                 $vars = $routeInfo[2];
                 require './controllers/IndexController.php';
                 break;
-            case 'AccomController':
-                $handler = $routeInfo[1][1];
-                $vars = $routeInfo[2];
-                require './controllers/AccomController.php';
-                break;
+//            case 'AccomController':
+//                $handler = $routeInfo[1][1];
+//                $vars = $routeInfo[2];
+//                require './controllers/AccomController.php';
+//                break;
             case 'WoodieController':
                 $handler = $routeInfo[1][1]; $vars = $routeInfo[2];
                 require './controllers/WoodieController.php';
