@@ -1,5 +1,2 @@
-.log
-
-
-
-logs
+*.log
+DatabasePdo.php
