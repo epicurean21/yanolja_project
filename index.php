@@ -20,6 +20,8 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/test', ['IndexController', 'test']);
     $r->addRoute('GET', '/test/{testNo}', ['IndexController', 'testDetail']);
     $r->addRoute('POST', '/test', ['IndexController', 'testPost']);
+    $r->addRoute('GET', '/motels', ['IndexController', 'getMotels']);
+    $r->addRoute('GET', '/motel-groups', ['IndexController', 'getMotelGroupList']);
     // 유효성 검사는 요청 마다 함으로 굳이 필요없음
     //$r->addRoute('GET', '/jwt', ['MainController', 'validateJwt']);
 
@@ -29,6 +31,12 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/hotels', ['IndexController', 'index']);
 //    $r->addRoute('GET', '/motels', ['AccomController', 'searchMotelByArea']);
 //    $r->addRoute('GET', '/hotels', ['AccomController', 'searchHotelByArea']);
+    $r->addRoute('GET', '/myYanolja', ['IndexController', 'myYanolja']);
+    $r->addRoute('GET', '/user-manage', ['IndexController', 'userManage']);
+    $r->addRoute('POST', '/isValidPwd', ['IndexController', 'isValidPwd']);
+    $r->addRoute('GET', '/users', ['IndexController', 'users']);
+    $r->addRoute('PATCH', '/users/change-name', ['IndexController', 'changeName']);
+    $r->addRoute('PATCH', '/users/change-pwd', ['IndexController', 'changePwd']);
 
 //    $r->addRoute('GET', '/users', 'get_all_users_handler');
 //    // {id} must be a number (\d+)
@@ -81,11 +89,11 @@ switch ($routeInfo[0]) {
                 $vars = $routeInfo[2];
                 require './controllers/IndexController.php';
                 break;
-//            case 'AccomController':
-//                $handler = $routeInfo[1][1];
-//                $vars = $routeInfo[2];
-//                require './controllers/AccomController.php';
-//                break;
+            case 'AccomController':
+                $handler = $routeInfo[1][1];
+                $vars = $routeInfo[2];
+                require './controllers/AccomController.php';
+                break;
             case 'WoodieController':
                 $handler = $routeInfo[1][1]; $vars = $routeInfo[2];
                 require './controllers/WoodieController.php';
