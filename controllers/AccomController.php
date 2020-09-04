@@ -13,12 +13,12 @@ try {
 
             $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
             if ($jwt == null) { // 비회원
-                $RegionGroupIdx = $_GET['RegionGroupIdx'];
-                $startDate = date("Y/m/d");
-                $endDate = date("Y/m/d");
-                $adultNum = 2;
-                $childNum = 0;
-
+//                $RegionGroupIdx = $_GET['RegionGroupIdx'];
+//                $startDate = date("Y/m/d");
+//                $endDate = date("Y/m/d");
+//                $adultNum = 2;
+//                $childNum = 0;
+//
 //                if ($_GET['startDate'] != null)
 //                    $startDate = $_GET['startDate'];
 //                if ($_GET['endDate'] != null)
@@ -27,8 +27,8 @@ try {
 //                    $adultNum = $_GET['adultNum'];
 //                if ($_GET['childNum'] != null)
 //                    $childNum = $_GET['childNum'];
-//                $peopleNum = intval($adultNum + $childNum);
-//                $StartTimeChk = strtotime($startDate);
+//                $peopleNum = $adultNum + $childNum;
+//               $StartTimeChk = strtotime($startDate);
 //                $EndTimeChk = strtotime($endDate);
 
                 if (!isValidRegion($RegionGroupIdx)) {

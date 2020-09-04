@@ -1,6 +1,47 @@
 <?php
-function test_pdo(){
-    echo "테스트야 잘 되라";
+function getMotels($startAt, $endAt)
+{
+    $pdo = pdoSqlConnect();
+    // 비회원/평일/motel/숙박 전체목록
+    $query = "  
+select MotelGroup.MotelGroupIdx,
+       MotelGroupName.MotelGroupName,
+       Region.RegionIdx,
+       RegionName,
+       Accommodation.AccomIdx,
+       AccomName,
+       AccomThumbnailUrl,
+       MotelRoom.RoomIdx,
+       RoomName,
+       PartTimeInfo.WeekdayTime,
+       AllDayInfo.WeekdayTime,
+       StandardCapacity,
+       MaxCapacity
+
+from Region
+         join MotelGroup on Region.RegionIdx = MotelGroup.RegionIdx
+         join MotelGroupName on MotelGroup.MotelGroupIdx = MotelGroupName.MotelGroupIdx
+         join Accommodation on Region.RegionIdx = Accommodation.RegionIdx
+         join PartTimeInfo on Accommodation.AccomIdx = PartTimeInfo.AccomIdx
+         join AllDayInfo on Accommodation.AccomIdx = AllDayInfo.AccomIdx
+         join MotelRoom on Accommodation.AccomIdx = MotelRoom.AccomIdx
+         join PartTimePrice on MotelRoom.AccomIdx = PartTimePrice.AccomIdx and MotelRoom.RoomIdx = PartTimePrice.RoomIdx
+         join AllDayPrice on MotelRoom.AccomIdx = AllDayPrice.AccomIdx and MotelRoom.RoomIdx = AllDayPrice.RoomIdx
+         join Reservation on Accommodation.AccomIdx = Reservation.AccomIdx and MotelRoom.RoomIdx = Reservation.RoomIdx
+where AccomType = 'M'
+  and ReserveType = 'A';
+    ";
+
+    $st = $pdo->prepare($query);
+    //    $st->execute([$param,$param]);
+    $st->execute([$startAt, $endAt]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
 }
 //
 ////READ

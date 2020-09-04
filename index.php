@@ -16,14 +16,15 @@ error_reporting(E_ALL); ini_set("display_errors", 1);
 //Main Server API
 $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) {
     /* ******************   Test   ****************** */
+    // 유효성 검사는 요청 마다 함으로 굳이 필요없음
+    //$r->addRoute('GET', '/jwt', ['MainController', 'validateJwt']);
     $r->addRoute('GET', '/', ['IndexController', 'index']);
     $r->addRoute('GET', '/test', ['IndexController', 'test']);
     $r->addRoute('GET', '/test/{testNo}', ['IndexController', 'testDetail']);
     $r->addRoute('POST', '/test', ['IndexController', 'testPost']);
     $r->addRoute('GET', '/motels', ['IndexController', 'getMotels']);
     $r->addRoute('GET', '/motel-groups', ['IndexController', 'getMotelGroupList']);
-    // 유효성 검사는 요청 마다 함으로 굳이 필요없음
-    //$r->addRoute('GET', '/jwt', ['MainController', 'validateJwt']);
+
 
     $r->addRoute('POST', '/jwt', ['MainController', 'createJwt']);
     $r->addRoute('POST', '/users', ['IndexController', 'createUser']);

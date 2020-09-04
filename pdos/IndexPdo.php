@@ -12,7 +12,6 @@ function keyCheck($key, $arr)
         exit;
     }
 }
-
 function isMember()
 {
     if (array_key_exists('HTTP_X_ACCESS_TOKEN', $_SERVER))
@@ -20,7 +19,6 @@ function isMember()
     else
         return false;
 }
-
 function parsingDate($date)
 {
 
@@ -29,6 +27,46 @@ function parsingDate($date)
     $day = substr($date, 6, 2);
 
     return $year . '-' . $month . '-' . $day;
+}
+function checkAllDayResrveWithCheckOutDate($endAt)
+{
+    $pdo = pdoSqlConnect();
+    $query = "
+            select CheckInDate                   as 체크인,
+       CheckOutDate                  as 체크아웃,
+       MotelGroup.MotelGroupIdx      as 지역,
+       MotelGroupName.MotelGroupName as 지역이름,
+       Accommodation.AccomIdx        as 숙소,
+       AccomName                     as 숙소이름,
+       MotelRoom.RoomIdx             as 방,
+       RoomName                      as 방이름
+
+from Region
+         join MotelGroup on Region.RegionIdx = MotelGroup.RegionIdx
+         join MotelGroupName on MotelGroup.MotelGroupIdx = MotelGroupName.MotelGroupIdx
+         join Accommodation on Region.RegionIdx = Accommodation.RegionIdx
+         join PartTimeInfo on Accommodation.AccomIdx = PartTimeInfo.AccomIdx
+         join AllDayInfo on Accommodation.AccomIdx = AllDayInfo.AccomIdx
+         join MotelRoom on Accommodation.AccomIdx = MotelRoom.AccomIdx
+         join PartTimePrice on MotelRoom.AccomIdx = PartTimePrice.AccomIdx and MotelRoom.RoomIdx = PartTimePrice.RoomIdx
+         join AllDayPrice on MotelRoom.AccomIdx = AllDayPrice.AccomIdx and MotelRoom.RoomIdx = AllDayPrice.RoomIdx
+         join Reservation on Accommodation.AccomIdx = Reservation.AccomIdx and MotelRoom.RoomIdx = Reservation.RoomIdx
+where AccomType = 'M'
+  and ReserveType = 'A'
+  and CheckInDate < date(?)
+  and CheckOutDate > date(?)
+    ";
+
+    $st = $pdo->prepare($query);
+    //    $st->execute([$param,$param]);
+    $st->execute([$endAt,$endAt]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
 }
 
 
@@ -116,6 +154,19 @@ function isValidUserId($id)
     $pdo = null;
 
     return intval($res[0]["exist"]);
+}
+
+function getMotels($startAt, $endAt)
+{
+    // 1. 1박인 경우 -> 대실 숙박 모두 가능
+    if(){
+
+    }
+    // 2. 연박인 경우 -> 숙박만 가능
+    else{
+
+    }
+    return;
 }
 
 
