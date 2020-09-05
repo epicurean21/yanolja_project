@@ -2,13 +2,15 @@
 require './pdos/DatabasePdo.php';
 require './pdos/IndexPdo.php';
 require './pdos/WoodiePdo.php';
+require './pdos/MapPdo.php';
 require './pdos/AccomPdo.php';
+
 require './vendor/autoload.php';
 
 use \Monolog\Logger as Logger;
 use Monolog\Handler\StreamHandler;
 date_default_timezone_set('Asia/Seoul');
-ini_set('default_charset', 'utf8mb4');
+ini_set('default$Longtitude_charset', 'utf8mb4');
 
 //에러출력하게 하는 코드
 //error_reporting(E_ALL); ini_set("display_errors", 1);
@@ -38,6 +40,10 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/users', ['IndexController', 'users']);
     $r->addRoute('PATCH', '/users/change-name', ['IndexController', 'changeName']);
     $r->addRoute('PATCH', '/users/change-pwd', ['IndexController', 'changePwd']);
+
+    $r->addRoute('GET', '/users', ['IndexController', 'users']);
+
+    $r->addRoute('GET', '/around-motel', ['MapController', 'aroundMotel']);
 
 //    $r->addRoute('GET', '/users', 'get_all_users_handler');
 //    // {id} must be a number (\d+)
@@ -104,6 +110,11 @@ switch ($routeInfo[0]) {
                 $handler = $routeInfo[1][1];
                 $vars = $routeInfo[2];
                 require './controllers/MainController.php';
+                break;
+            case 'MapController':
+                $handler = $routeInfo[1][1];
+                $vars = $routeInfo[2];
+                require './controllers/MapController.php';
                 break;
             /*case 'ProductController':
                 $handler = $routeInfo[1][1]; $vars = $routeInfo[2];
