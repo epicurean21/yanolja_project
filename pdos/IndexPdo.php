@@ -12,13 +12,6 @@ function keyCheck($key, $arr)
         exit;
     }
 }
-function isMember()
-{
-    if (array_key_exists('HTTP_X_ACCESS_TOKEN', $_SERVER))
-        return true;
-    else
-        return false;
-}
 function parsingDate($date)
 {
 
@@ -28,49 +21,22 @@ function parsingDate($date)
 
     return $year . '-' . $month . '-' . $day;
 }
-function checkAllDayResrveWithCheckOutDate($endAt)
-{
-    $pdo = pdoSqlConnect();
-    $query = "
-            select CheckInDate                   as 체크인,
-       CheckOutDate                  as 체크아웃,
-       MotelGroup.MotelGroupIdx      as 지역,
-       MotelGroupName.MotelGroupName as 지역이름,
-       Accommodation.AccomIdx        as 숙소,
-       AccomName                     as 숙소이름,
-       MotelRoom.RoomIdx             as 방,
-       RoomName                      as 방이름
+function getRandomNickname(){
+    while(true) {
+        $nicknameArr1 = array('족제비', '너구리', '미어캣', '하마', '코끼리', '사자', '호랑이', '토끼', '사슴', '고양이');
+        $nicknameArr2 = array('행복한', '배고픈', '신나는', '흥부자', '슬픔이', '하늘', '바다', '바람', '구름', '햇님');
+        $randNum1 = rand(0,9);
+        $randNum2 = rand(0,9);
 
-from Region
-         join MotelGroup on Region.RegionIdx = MotelGroup.RegionIdx
-         join MotelGroupName on MotelGroup.MotelGroupIdx = MotelGroupName.MotelGroupIdx
-         join Accommodation on Region.RegionIdx = Accommodation.RegionIdx
-         join PartTimeInfo on Accommodation.AccomIdx = PartTimeInfo.AccomIdx
-         join AllDayInfo on Accommodation.AccomIdx = AllDayInfo.AccomIdx
-         join MotelRoom on Accommodation.AccomIdx = MotelRoom.AccomIdx
-         join PartTimePrice on MotelRoom.AccomIdx = PartTimePrice.AccomIdx and MotelRoom.RoomIdx = PartTimePrice.RoomIdx
-         join AllDayPrice on MotelRoom.AccomIdx = AllDayPrice.AccomIdx and MotelRoom.RoomIdx = AllDayPrice.RoomIdx
-         join Reservation on Accommodation.AccomIdx = Reservation.AccomIdx and MotelRoom.RoomIdx = Reservation.RoomIdx
-where AccomType = 'M'
-  and ReserveType = 'A'
-  and CheckInDate < date(?)
-  and CheckOutDate > date(?)
-    ";
+        $nickname = (string)$nicknameArr2[$randNum1].$nicknameArr1[$randNum2];
 
-    $st = $pdo->prepare($query);
-    //    $st->execute([$param,$param]);
-    $st->execute([$endAt,$endAt]);
-    $st->setFetchMode(PDO::FETCH_ASSOC);
-    $res = $st->fetchAll();
-
-    $st = null;
-    $pdo = null;
-
-    return $res;
+        // 닉네임이 존재 안 하면 리턴.
+        if(!isValidUserName($nickname))
+            return $nickname;
+    }
 }
 
 
-//READ
 function test()
 {
     $pdo = pdoSqlConnect();
@@ -88,7 +54,6 @@ function test()
     return $res;
 }
 
-//READ
 function testDetail($testNo)
 {
     $pdo = pdoSqlConnect();
@@ -106,7 +71,6 @@ function testDetail($testNo)
     return $res[0];
 }
 
-
 function testPost($name)
 {
     $pdo = pdoSqlConnect();
@@ -119,7 +83,6 @@ function testPost($name)
     $pdo = null;
 
 }
-
 
 function isValidUser($id, $pw)
 {
@@ -156,19 +119,22 @@ function isValidUserId($id)
     return intval($res[0]["exist"]);
 }
 
-function getMotels($startAt, $endAt)
+function isValidUserName($nickname)
 {
-    // 1. 1박인 경우 -> 대실 숙박 모두 가능
-    if(){
+    $pdo = pdoSqlConnect();
+    $query = "SELECT EXISTS(SELECT * FROM User WHERE UserName = ?) AS exist;";
 
-    }
-    // 2. 연박인 경우 -> 숙박만 가능
-    else{
+    $st = $pdo->prepare($query);
+    //    $st->execute([$param,$param]);
+    $st->execute([$nickname]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
 
-    }
-    return;
+    $st = null;
+    $pdo = null;
+
+    return intval($res[0]["exist"]);
 }
-
 
 function getMotelGroupList()
 {
@@ -191,9 +157,7 @@ join MotelGroupName on MotelGroup.MotelGroupIdx = MotelGroupName.MotelGroupIdx
     return $res;
 }
 
-
-//CREATE
-function createUser($UserId, $UserPwd, $UserName, $UserBirth, $UserContact, $UserGender)
+function createUser($UserId, $UserPwd, $UserContact)
 {
     $pdo = pdoSqlConnect();
     $query = "INSERT INTO yanolja_test.User (UserId, UserPwd, UserName, UserBirth, UserContact, UserGender,
@@ -201,12 +165,14 @@ function createUser($UserId, $UserPwd, $UserName, $UserBirth, $UserContact, $Use
 VALUES (?, ?, ?, ?, ?, ?, default, default, default, default)";
 
     $st = $pdo->prepare($query);
-    $st->execute([$UserId, $UserPwd, $UserName, $UserBirth, $UserContact, $UserGender]);
+    $st->execute([$UserId, $UserPwd, getRandomNickname(), '1990-01-01', $UserContact, 'M']);
 
     $st = null;
     $pdo = null;
 
 }
+
+
 
 function myYanolja($UserId)
 {
