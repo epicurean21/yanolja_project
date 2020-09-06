@@ -40,7 +40,9 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/users', ['IndexController', 'users']);
     $r->addRoute('PATCH', '/users/change-name', ['IndexController', 'changeName']);
     $r->addRoute('PATCH', '/users/change-pwd', ['IndexController', 'changePwd']);
-    $r->addRoute('GET', '/around-motel', ['MapController', 'aroundMotel']);
+    $r->addRoute('GET', '/around-motels', ['MapController', 'aroundMotels']);
+    $r->addRoute('GET', '/around-hotels', ['MapController', 'aroundHotels']);
+    $r->addRoute('GET', '/around/map', ['MapController', 'aroundMap']);
 
 //    $r->addRoute('GET', '/users', 'get_all_users_handler');
 //    // {id} must be a number (\d+)
