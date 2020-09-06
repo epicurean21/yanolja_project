@@ -10,6 +10,7 @@ require './vendor/autoload.php';
 use \Monolog\Logger as Logger;
 use Monolog\Handler\StreamHandler;
 date_default_timezone_set('Asia/Seoul');
+//ini_set('default_charset', 'utf8mb4');
 ini_set('default$Longtitude_charset', 'utf8mb4');
 
 //에러출력하게 하는 코드
@@ -24,14 +25,13 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/test', ['IndexController', 'test']);
     $r->addRoute('GET', '/test/{testNo}', ['IndexController', 'testDetail']);
     $r->addRoute('POST', '/test', ['IndexController', 'testPost']);
-    $r->addRoute('GET', '/motels', ['WoodieController', 'getMotels']);
-    $r->addRoute('GET', '/motel-groups', ['IndexController', 'getMotelGroupList']);
-
 
     $r->addRoute('POST', '/jwt', ['MainController', 'createJwt']);
+    $r->addRoute('GET', '/motels', ['WoodieController', 'getMotels']);
+    $r->addRoute('GET', '/motel-groups', ['IndexController', 'getMotelGroupList']);
     $r->addRoute('POST', '/users', ['IndexController', 'createUser']);
 
-    $r->addRoute('GET', '/hotels', ['IndexController', 'index']);
+
 //    $r->addRoute('GET', '/motels', ['AccomController', 'searchMotelByArea']);
 //    $r->addRoute('GET', '/hotels', ['AccomController', 'searchHotelByArea']);
     $r->addRoute('GET', '/myYanolja', ['IndexController', 'myYanolja']);
@@ -40,9 +40,6 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/users', ['IndexController', 'users']);
     $r->addRoute('PATCH', '/users/change-name', ['IndexController', 'changeName']);
     $r->addRoute('PATCH', '/users/change-pwd', ['IndexController', 'changePwd']);
-
-    $r->addRoute('GET', '/users', ['IndexController', 'users']);
-
     $r->addRoute('GET', '/around-motel', ['MapController', 'aroundMotel']);
 
 //    $r->addRoute('GET', '/users', 'get_all_users_handler');
