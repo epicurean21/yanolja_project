@@ -2,10 +2,11 @@
 /*
  * 평일/주말 판단 함수
  */
-function getDayType($date){
+function getDayType($date)
+{
     $day = date('w', strtotime($date));
 
-    if($day > 0 && $day <5)
+    if ($day > 0 && $day < 5)
         $dayType = 'weekday';
     else
         $dayType = 'weekend';
@@ -53,24 +54,48 @@ function getPartTimeInfo($isMember, $dayType, $AccomIdx)
         return getWeekendPartTime($AccomIdx);
 }
 
+///////////////////////////////////////////////////////////////////
+// 특정 지역 그룹의 모텔 수 가져오기
+//function getNumOfMotel($motelGroupIdx){
+//    $pdo = pdoSqlConnect();
+//    $query = "
+//                select count(AccomIdx) as num
+//                from Region
+//                         join MotelGroup on Region.RegionIdx = MotelGroup.RegionIdx
+//                         join Accommodation on Region.RegionIdx = Accommodation.RegionIdx
+//                where AccomType = 'M'
+//                  and MotelGroup.MotelGroupIdx = ?;
+//    ";
+//
+//    $st = $pdo->prepare($query);
+//    //    $st->execute([$param,$param]);
+//    $st->execute([$motelGroupIdx]);
+//    $st->setFetchMode(PDO::FETCH_ASSOC);
+//    $res = $st->fetchAll();
+//
+//    $st = null;
+//    $pdo = null;
+//
+//    return $res[0]['num'];
+//}
 
-
-
-// 특정 지역 그룹의 모든 모텔 idx 가져오기
-function getMotelList($motelGroupIdx){
+// 특정 그룹의 검색 인원에 맞는 모든 모텔의 방을 다 불러온다.
+function getMotelRoomList($motelGroupIdx, $adult, $child)
+{
     $pdo = pdoSqlConnect();
     $query = "
-                select AccomIdx
-                from Region
-                         join MotelGroup on Region.RegionIdx = MotelGroup.RegionIdx
-                         join Accommodation on Region.RegionIdx = Accommodation.RegionIdx
-                where AccomType = 'M'
-                  and MotelGroup.MotelGroupIdx = ?;
+                select Accommodation.AccomIdx, RoomIdx
+                from Region join Accommodation on Region.RegionIdx = Accommodation.RegionIdx
+                join MotelGroup on MotelGroup.RegionIdx = Accommodation.RegionIdx
+                join Room on Room.AccomIdx = Accommodation.AccomIdx
+                where MotelGroupIdx = ?
+                  and AccomType = 'M'
+                and ? + ? <= MaxCapacity;
     ";
 
     $st = $pdo->prepare($query);
     //    $st->execute([$param,$param]);
-    $st->execute([$motelGroupIdx]);
+    $st->execute([$motelGroupIdx, $adult, $child]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
@@ -80,80 +105,182 @@ function getMotelList($motelGroupIdx){
     return $res;
 }
 
-// 지역그룹별 모텔 조회 함수
-function getMotels($isMember, $startAt, $endAt, $motelGroupIdx)
+// 특정 방의 해당 날짜에 숙박이 가능한지 체크한다.
+function checkPartTimeReserve($AccomIdx, $RoomIdx, $startAt, $endAt){
+    $pdo = pdoSqlConnect();
+    $query = "
+                select not exists(select *
+                from Reservation
+                where AccomIdx = ?
+                and RoomIdx = ?
+                and CheckInDate > date(?)
+                and CheckOutDate < date(?)) as exist
+    ";
+
+    $st = $pdo->prepare($query);
+    //    $st->execute([$param,$param]);
+    $st->execute([$AccomIdx, $RoomIdx, $startAt, $endAt]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res[0]['exist'];
+}
+
+// 특정 방의 대실 예약의 체크인, 체크 아웃 시간을 가져온다.
+function getPartTimeCheckInOutTime($AccomIdx, $RoomIdx, $startAt, $endAt)
 {
+    $pdo = pdoSqlConnect();
+    $query = "
+                select time(CheckInDate) as CheckIn, time(CheckOutDate) as CheckOut 
+                from Reservation
+                where AccomIdx = ?
+                and RoomIdx = ?
+                and CheckInDate > date(?)
+                and CheckOutDate < date(?)
+    ";
+
+    $st = $pdo->prepare($query);
+    //    $st->execute([$param,$param]);
+    $st->execute([$AccomIdx, $RoomIdx, $startAt, $endAt]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res[0];
+}
+
+function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
+{
+
     // 평일,주말 판단
     $dayType = getDayType($startAt);
 
     // 숙박 이용 날짜 차이 구하기
-    $dayDiff = (strtotime($endAt) - strtotime($startAt)) / 86400;
+    $dayDiff = (strtotime($endAt) - strtotime($startAt))/60/60/24;
 
-    // 해당 지역의 모든 모텔 불러오기
-    $list = getMotelList($motelGroupIdx);
+//    // 해당 그룹의 모텔의 수 구하기
+//    $numOfMotel = getNumOfMotel($motelGroupIdx);
 
-    // 1. 1박인 경우 -> 숙박, 대실 모두 가능
-    if($dayDiff == 1){
+    // 해당 지역 그룹의 모든 방 다 가져오기
+    $motelRoomlist = getMotelRoomList($motelGroupIdx, $adult, $child);
 
-        for($i = 0; $i < count($list); $i++){
+    // 방 마다 돌면서 조건 체크
+    for ($i = 0; $i < count($motelRoomlist); $i++) {
 
-            // 숙소 정보 추가
-            $list[$i]['AccomName'] = getAccomInfo($list[$i]['AccomIdx'])['AccomName'];
-            $list[$i]['AvgRating'] = getAccomInfo($list[$i]['AccomIdx'])['AvgRating'];
-            $list[$i]['NumOfReview'] = getAccomInfo($list[$i]['AccomIdx'])['NumOfReview'];
-            $list[$i]['AccomThumbnailUrl'] = getAccomInfo($list[$i]['AccomIdx'])['AccomThumbnailUrl'];
-            $list[$i]['AccomTag'] = getAccomTag($list[$i]['AccomIdx']);
-            $list[$i]['NumOfUserPick'] = getUserPick($list[$i]['AccomIdx']);
+        $nowAccomIdx = $motelRoomlist[$i]['AccomIdx'];
+        $nowRoomIdx = $motelRoomlist[$i]['RoomIdx'];
 
-            // 숙박 가능 여부 체크 및 최소 금액 추가
-            if( isAvailableAllDay($list[$i]['AccomIdx'],$endAt)){
-                $list[$i]['isAvailableAllDay'] = 'T';
-                $list[$i]['minAllDayPrice'] = getMinAllDayPrice($isMember, $dayType, $list[$i]['AccomIdx'], $endAt)['minPrice'];
+        // 1. 1박인 경우 => 숙박 + 대실
+        if ($dayDiff == 1) {
+            // 해당 객실의 대실이 가능하다면
 
-                // 숙박 가능한 최소 금액 객실의 당일 대실이 없다면
-                if(strcmp(checkPartTimeReservation($list[$i]['AccomIdx'], getMinAllDayPrice($isMember, $dayType, $list[$i]['AccomIdx'], $endAt)['RoomIdx'],$startAt, $endAt), 'empty') == 0){
-                    // 숙박 가능, 대실이 없는 경우
-                    $list[$i]['AllDayCheckInHour'] = getAllDayHour($list[$i]['AccomIdx'], $dayType);
-                }
-                else{
-                    // 숙박 가능한 숙소의 최소 가격 객실의 당일 숙박이 있다면, 숙박
-                    $PartTimeCheckOutTime =  checkPartTimeReservation($list[$i]['AccomIdx'], getMinAllDayPrice($isMember, $dayType, $list[$i]['AccomIdx'], $endAt)['RoomIdx'],$startAt, $endAt);
-                    $AllDayCheckInTime = getAllDayHour($list[$i]['AccomIdx'], $dayType);
-                    // 대실 퇴실 시간이 숙박 기준 입실 시간보다 빠르다면
-                    if($PartTimeCheckOutTime < $AllDayCheckInTime)
-                        $list[$i]['AllDayCheckInHour'] = $AllDayCheckInTime;
-                    else
-                        $list[$i]['AllDayCheckInHour'] = $PartTimeCheckOutTime;
-                }
-
-
+            if (checkPartTimeReserve($nowAccomIdx, $nowRoomIdx, $startAt, $endAt)) {
+                $motelRoomlist[$i]['IsPartTimeAvailable'] = 'T';
+                $motelRoomlist[$i]['PartTimeReserveCheckIn'] = '';
+                $motelRoomlist[$i]['PartTimeReserveCheckOut'] = '';
+            } else {// 해당 객실의 대실이 불가하다면
+                $motelRoomlist[$i]['IsPartTimeAvailable'] = 'F';
+                $motelRoomlist[$i]['PartTimeReserveCheckIn'] = getPartTimeCheckInOutTime($nowAccomIdx, $nowRoomIdx, $startAt, $endAt)['CheckIn'];
+                $motelRoomlist[$i]['PartTimeReserveCheckOut'] = getPartTimeCheckInOutTime($nowAccomIdx, $nowRoomIdx, $startAt, $endAt)['CheckOut'];
 
             }
-            else{
-                $list[$i]['isAvailableAllDay'] = 'F';
-                $list[$i]['minAllDayPrice'] = '0';
-                $list[$i]['AllDayCheckInHour'] = '00:00:00';
-            }
 
-            // 대실 가능 여부 체크 및 대실 이용 시간 추가
-            if (isAvailablePartTime($list[$i]['AccomIdx'], $startAt, $endAt)) {
-                $list[$i]['isAvailablePartTime'] = 'T';
-                $list[$i]['PartTimeHour'] = getPartTimeInfo($isMember, $dayType, $list[$i]['AccomIdx'])['PartTimeHour'];
-            } else {
-                $list[$i]['isAvailablePartTime'] = 'F';
-                $list[$i]['PartTimeHour'] = '00:00:00';
-            }
+
+            //
+        } // 2. 연박인 경우
+        else {
 
         }
 
-        return $list;
-    }
-    // 2. 연박인 경우 -> 숙박만 가능
-    else{
-        return;
-    }
 
+        $motelRoomlist[$i]['AvgRating'] = getAccomInfo($nowAccomIdx)['avgRating'];
+        $motelRoomlist[$i]['AccomName'] = getAccomInfo($nowAccomIdx)['numOfReview'];
+        $motelRoomlist[$i]['AccomTag'] = getAccomTag($nowAccomIdx);
+        $motelRoomlist[$i]['NumOfUserPick'] = getUserPick($nowAccomIdx);
+
+    }
+    return $motelRoomlist;
 }
+
+// 지역그룹별 모텔 조회 함수
+//function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
+//{
+//    // 평일,주말 판단
+//    $dayType = getDayType($startAt);
+//
+//    // 숙박 이용 날짜 차이 구하기
+//    $dayDiff = (strtotime($endAt) - strtotime($startAt)) / 86400;
+//
+//    // 해당 지역의 모든 모텔 불러오기
+//    $list = getMotelList($motelGroupIdx);
+//
+//    // 1. 1박인 경우 -> 숙박, 대실 모두 가능
+//    if($dayDiff == 1){
+//
+//        for($i = 0; $i < count($list); $i++){
+//
+//            // 숙소 정보 추가
+//            $list[$i]['AccomName'] = getAccomInfo($list[$i]['AccomIdx'])['AccomName'];
+//            $list[$i]['AvgRating'] = getAccomInfo($list[$i]['AccomIdx'])['AvgRating'];
+//            $list[$i]['NumOfReview'] = getAccomInfo($list[$i]['AccomIdx'])['NumOfReview'];
+//            $list[$i]['AccomThumbnailUrl'] = getAccomInfo($list[$i]['AccomIdx'])['AccomThumbnailUrl'];
+//            $list[$i]['AccomTag'] = getAccomTag($list[$i]['AccomIdx']);
+//            $list[$i]['NumOfUserPick'] = getUserPick($list[$i]['AccomIdx']);
+//
+//            // 숙박 가능 여부 체크 및 최소 금액 추가
+//            if( isAvailableAllDay($list[$i]['AccomIdx'],$endAt)){
+//                $list[$i]['isAvailableAllDay'] = 'T';
+//                $list[$i]['minAllDayPrice'] = getMinAllDayPrice($isMember, $dayType, $list[$i]['AccomIdx'], $endAt)['minPrice'];
+//
+//                // 숙박 가능한 최소 금액 객실의 당일 대실이 없다면
+//                if(strcmp(checkPartTimeReservation($list[$i]['AccomIdx'], getMinAllDayPrice($isMember, $dayType, $list[$i]['AccomIdx'], $endAt)['RoomIdx'],$startAt, $endAt), 'empty') == 0){
+//                    // 숙박 가능, 대실이 없는 경우
+//                    $list[$i]['AllDayCheckInHour'] = getAllDayHour($list[$i]['AccomIdx'], $dayType);
+//                }
+//                else{
+//                    // 숙박 가능한 숙소의 최소 가격 객실의 당일 숙박이 있다면, 숙박
+//                    $PartTimeCheckOutTime =  checkPartTimeReservation($list[$i]['AccomIdx'], getMinAllDayPrice($isMember, $dayType, $list[$i]['AccomIdx'], $endAt)['RoomIdx'],$startAt, $endAt);
+//                    $AllDayCheckInTime = getAllDayHour($list[$i]['AccomIdx'], $dayType);
+//                    // 대실 퇴실 시간이 숙박 기준 입실 시간보다 빠르다면
+//                    if($PartTimeCheckOutTime < $AllDayCheckInTime)
+//                        $list[$i]['AllDayCheckInHour'] = $AllDayCheckInTime;
+//                    else
+//                        $list[$i]['AllDayCheckInHour'] = $PartTimeCheckOutTime;
+//                }
+//
+//
+//
+//            }
+//            else{
+//                $list[$i]['isAvailableAllDay'] = 'F';
+//                $list[$i]['minAllDayPrice'] = '0';
+//                $list[$i]['AllDayCheckInHour'] = '00:00:00';
+//            }
+//
+//            // 대실 가능 여부 체크 및 대실 이용 시간 추가
+//            if (isAvailablePartTime($list[$i]['AccomIdx'], $startAt, $endAt)) {
+//                $list[$i]['isAvailablePartTime'] = 'T';
+//                $list[$i]['PartTimeHour'] = getPartTimeInfo($isMember, $dayType, $list[$i]['AccomIdx'])['PartTimeHour'];
+//            } else {
+//                $list[$i]['isAvailablePartTime'] = 'F';
+//                $list[$i]['PartTimeHour'] = '00:00:00';
+//            }
+//
+//        }
+//
+//        return $list;
+//    }
+//    // 2. 연박인 경우 -> 숙박만 가능
+//    else{
+//        return;
+//    }
+//
+//}
 
 //function getMotels($isMember, $startAt, $endAt, $motelGroupIdx)
 //{
@@ -341,7 +468,8 @@ function getMemberMinWeekendPrice($AccomIdx, $endAt)
     return $res[0];
 }
 
-function getWeekdayPartTime($accomIdx){
+function getWeekdayPartTime($accomIdx)
+{
     $pdo = pdoSqlConnect();
     $query = "
                 select  PartTimeInfo.WeekdayTime as PartTimeHour
@@ -361,7 +489,8 @@ where AccomIdx = ?
     return $res[0];
 }
 
-function getWeekendPartTime($accomIdx){
+function getWeekendPartTime($accomIdx)
+{
     $pdo = pdoSqlConnect();
     $query = "
                 select PartTimeInfo.WeekendTime as PartTimeHour
@@ -381,7 +510,8 @@ function getWeekendPartTime($accomIdx){
     return $res[0];
 }
 
-function getMemberWeekdayPartTime($accomIdx){
+function getMemberWeekdayPartTime($accomIdx)
+{
     $pdo = pdoSqlConnect();
     $query = "
                 select PartTimeInfo.MemberWeekdayTime as PartTimeHour
@@ -401,45 +531,13 @@ where AccomIdx = ?
     return $res[0];
 }
 
-function getMemberWeekendPartTime($accomIdx){
+function getMemberWeekendPartTime($accomIdx)
+{
     $pdo = pdoSqlConnect();
     $query = "
                 select PartTimeInfo.MemberWeekendTime as PartTimeHour
                 from PartTimeInfo
 where AccomIdx = ?
-    ";
-
-    $st = $pdo->prepare($query);
-    //    $st->execute([$param,$param]);
-    $st->execute([$accomIdx]);
-    $st->setFetchMode(PDO::FETCH_ASSOC);
-    $res = $st->fetchAll();
-
-    $st = null;
-    $pdo = null;
-
-    return $res[0];
-}
-
-// 특정 idx를 가진 숙소의 이름, 평균평점, 리뷰 수 가져오는 함수
-function getAccomInfo($accomIdx)
-{
-    $pdo = pdoSqlConnect();
-    $query = "
-                select t1.AccomIdx,
-                       AccomName,
-                       AvgRating,
-                       If(isnull(count(*)), 0, count(*)) as NumOfReview,
-                       AccomThumbnailUrl
-                from Accommodation
-                         join (select AccommodationReview.AccomIdx, avg(OverallRating) as AvgRating
-                               from Accommodation
-                                        join AccommodationReview on Accommodation.AccomIdx = AccommodationReview.AccomIdx
-                               group by Accommodation.AccomIdx) as t1
-                              on Accommodation.AccomIdx = t1.AccomIdx
-                         join AccommodationReview
-                              on AccommodationReview.AccomIdx = Accommodation.AccomIdx
-                where Accommodation.AccomIdx = ?;
     ";
 
     $st = $pdo->prepare($query);
@@ -512,10 +610,11 @@ function hasPartTimeReservation($AccomIdx, $startAt, $endAt)
 }
 
 // 특정 idx를 가진 숙소의 퇴실일 기준 숙박 가능한지 체크하는 함수
-function isAvailableAllDay($AccomIdx, $endAt){
+function isAvailableAllDay($AccomIdx, $endAt)
+{
 
     // 예약이 없으면 true 리턴
-    if(hasAllDayReservation($AccomIdx, $endAt) == 0)
+    if (hasAllDayReservation($AccomIdx, $endAt) == 0)
         return true;
 
     $pdo = pdoSqlConnect();
@@ -550,9 +649,10 @@ function isAvailableAllDay($AccomIdx, $endAt){
 }
 
 // 특정 idx를 가진 숙소의 대실 가능한지 체크하는 함수
-function isAvailablePartTime($AccomIdx, $startAt, $endAt){
+function isAvailablePartTime($AccomIdx, $startAt, $endAt)
+{
 
-    if(hasPartTimeReservation($AccomIdx, $startAt, $endAt) == 0)
+    if (hasPartTimeReservation($AccomIdx, $startAt, $endAt) == 0)
         return true;
 
     $pdo = pdoSqlConnect();
@@ -587,38 +687,70 @@ function isAvailablePartTime($AccomIdx, $startAt, $endAt){
     return $res[0]['exist'];
 }
 
-// 어떤 Room의 당일 대실이 있는지 확인 -> 체크아웃시간= 숙박 이용시간 임을 알려주는 함수
-function checkPartTimeReservation($AccomIdx, $RoomIdx, $startAt, $endAt){
+//// 어떤 Room의 당일 대실이 있는지 확인 -> 체크아웃시간= 숙박 이용시간 임을 알려주는 함수
+//function checkPartTimeReservation($AccomIdx, $RoomIdx, $startAt, $endAt){
+//
+//    $pdo = pdoSqlConnect();
+//    $query = "
+//                select CheckOutDate
+//                from Reservation
+//                where ReserveType = 'P'
+//                  and AccomIdx = ?
+//                  and RoomIdx = ?
+//                  and CheckInDate > ?
+//                  and CheckOutDate < ?
+//    ";
+//
+//    $st = $pdo->prepare($query);
+//    //    $st->execute([$param,$param]);
+//    $st->execute([$AccomIdx, $RoomIdx, $startAt, $endAt]);
+//    $st->setFetchMode(PDO::FETCH_ASSOC);
+//    $res = $st->fetchAll();
+//
+//    $st = null;
+//    $pdo = null;
+//
+//    // 어떤 룸의 당일 대실이 있는지 체크
+//    if(empty($res[0]))
+//        return 'empty';
+//    else {
+//        return date("H:i:s",strtotime($res[0]['CheckOutDate']));
+//    }
+//}
 
+// 특정 idx를 가진 숙소의 이름, 평균평점, 리뷰 수 가져오는 함수
+function getAccomInfo($accomIdx)
+{
     $pdo = pdoSqlConnect();
     $query = "
-                select CheckOutDate
-                from Reservation
-                where ReserveType = 'P'
-                  and AccomIdx = ?
-                  and RoomIdx = ?
-                  and CheckInDate > ?
-                  and CheckOutDate < ?
+                select
+                       avgRating,
+                       If(isnull(count(*)), 0, count(*)) as numOfReview
+                from Accommodation
+                         join (select AccommodationReview.AccomIdx, avg(OverallRating) as avgRating
+                               from Accommodation
+                                        join AccommodationReview on Accommodation.AccomIdx = AccommodationReview.AccomIdx
+                               group by Accommodation.AccomIdx) as t1
+                              on Accommodation.AccomIdx = t1.AccomIdx
+                         join AccommodationReview
+                              on AccommodationReview.AccomIdx = Accommodation.AccomIdx
+                where Accommodation.AccomIdx = ?;
     ";
 
     $st = $pdo->prepare($query);
     //    $st->execute([$param,$param]);
-    $st->execute([$AccomIdx, $RoomIdx, $startAt, $endAt]);
+    $st->execute([$accomIdx]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
     $st = null;
     $pdo = null;
 
-    // 어떤 룸의 당일 대실이 있는지 체크
-    if(empty($res[0]))
-        return 'empty';
-    else {
-        return date("H:i:s",strtotime($res[0]['CheckOutDate']));
-    }
+    return $res[0];
 }
 
-function getAllDayHour($AccomIdx,$dayType){
+function getAllDayHour($AccomIdx, $dayType)
+{
 
     $pdo = pdoSqlConnect();
     $query = "
@@ -635,13 +767,14 @@ function getAllDayHour($AccomIdx,$dayType){
 
     $st = null;
     $pdo = null;
-    if(strcmp('weekday', $dayType))
+    if (strcmp('weekday', $dayType))
         return $res[0]['WeekdayTime'];
     else
         return $res[0]['WeekendTime'];
 }
 
-function getAccomTag($AccomIdx){
+function getAccomTag($AccomIdx)
+{
 
     $pdo = pdoSqlConnect();
     $query = "
@@ -659,10 +792,11 @@ function getAccomTag($AccomIdx){
     $st = null;
     $pdo = null;
 
-   return $res;
+    return $res;
 }
 
-function getUserPick($AccomIdx){
+function getUserPick($AccomIdx)
+{
 
     $pdo = pdoSqlConnect();
     $query = "

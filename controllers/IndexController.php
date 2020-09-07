@@ -132,16 +132,25 @@ try {
                 echo json_encode($res, JSON_NUMERIC_CHECK);
                 break;
             } else {
-                $data = getDataByJWToken($jwt, JWT_SECRET_KEY);
-                $UserId = $data->id;
-//                $UserId = "u1@aaa.com"; TEST용
-                $res->Result->User = myYanolja($UserId);
-                $res->Result->UserReseration = getUserReservation($UserId);
-                $res->isSuccess = TRUE;
-                $res->code = 200;
-                $res->message = "회원정보불러오기 성공";
-                echo json_encode($res, JSON_NUMERIC_CHECK);
-                break;
+                if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    $res->IsSuccess = FALSE;
+                    $res->Code = 401;
+                    $res->Message = "유효하지 않은 토큰입니다";
+                    echo json_encode($res, JSON_NUMERIC_CHECK);
+                    return;
+                }
+                else {
+                    $data = getDataByJWToken($jwt, JWT_SECRET_KEY);
+                    $UserId = $data->id;
+                    $UserIdx = getUserIdx($UserId);
+                    $res->Result->User = myYanolja($UserId, $UserIdx);
+                    $res->Result->UserReseration = getUserReservation($UserId);
+                    $res->isSuccess = TRUE;
+                    $res->code = 200;
+                    $res->message = "회원정보불러오기 성공";
+                    echo json_encode($res, JSON_NUMERIC_CHECK);
+                    break;
+                }
             }
             break;
 

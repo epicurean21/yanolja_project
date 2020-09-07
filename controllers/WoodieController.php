@@ -44,7 +44,7 @@ try {
                 $isMember = false;
             }
 
-            $res->result = getMotels($isMember, $_GET['startAt'], $_GET['endAt'], $_GET['motelGroupIdx']);
+            $res->result = getMotels($isMember, $_GET['startAt'], $_GET['endAt'], $_GET['motelGroupIdx'], $_GET['adult'], $_GET['child']);
             $res->isSuccess = TRUE;
             $res->code = 100;
             $res->message = "지역그룹 모텔 불러오기 성공";
