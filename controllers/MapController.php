@@ -13,7 +13,7 @@ try {
             http_response_code(200);
             $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
             $Latitude = $_GET['Latitude'];
-            $Longtitude = $_GET['Longtitude'];
+            $Longitude = $_GET['Longitude'];
             $CheckInDate = date("Y/m/d");
             $CheckOutDate = date("Y-m-d", strtotime("+1 day", strtotime($CheckInDate)));
 
@@ -24,7 +24,7 @@ try {
                 $CheckOutDate = $_GET['CheckOutDate'];
             }
 
-            if($Latitude == null || $Longtitude == null) {
+            if($Latitude == null || $Longitude == null) {
                 $res->IsSuccess = FALSE;
                 $res->Code = 400;
                 $res->Message = "올바른 위도와 경도를 입력하세요";
@@ -41,7 +41,7 @@ try {
                 }
                 else {
                     if ($jwt == null) { // 비회원
-                        $res->Result = AroundMotel($Latitude, $Longtitude, $CheckInDate);
+                        $res->Result = AroundMotel($Latitude, $Longitude, $CheckInDate);
                         $res->IsSuccess = TRUE;
                         $res->Code = 200;
                         $res->Message = "비회원 위치 기반 모텔 불러오기 성공";
@@ -55,7 +55,7 @@ try {
                             echo json_encode($res, JSON_NUMERIC_CHECK);
                             return;
                         } else {
-                            $res->Result = AroundMotelMember($Latitude, $Longtitude, $CheckInDate);
+                            $res->Result = AroundMotelMember($Latitude, $Longitude, $CheckInDate);
                             $res->IsSuccess = TRUE;
                             $res->Code = 201;
                             $res->Message = "회원 위치 기반 모텔 불러오기 성공";
@@ -69,7 +69,7 @@ try {
             http_response_code(200);
             $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
             $Latitude = $_GET['Latitude'];
-            $Longtitude = $_GET['Longtitude'];
+            $Longitude = $_GET['Longitude'];
             $CheckInDate = date("Y/m/d");
             $CheckOutDate = date("Y-m-d", strtotime("+1 day", strtotime($CheckInDate)));
 
@@ -80,7 +80,7 @@ try {
                 $CheckOutDate = $_GET['CheckOutDate'];
             }
 
-            if($Latitude == null || $Longtitude == null) {
+            if($Latitude == null || $Longitude == null) {
                 $res->IsSuccess = FALSE;
                 $res->Code = 400;
                 $res->Message = "올바른 위도와 경도를 입력하세요";
@@ -97,7 +97,7 @@ try {
                 }
                 else {
                     if ($jwt == null) { // 비회원
-                        $res->Result = AroundHotel($Latitude, $Longtitude, $CheckInDate);
+                        $res->Result = AroundHotel($Latitude, $Longitude, $CheckInDate);
                         $res->IsSuccess = TRUE;
                         $res->Code = 200;
                         $res->Message = "비회원 위치 기반 호텔 불러오기 성공";
@@ -111,7 +111,7 @@ try {
                             echo json_encode($res, JSON_NUMERIC_CHECK);
                             return;
                         } else {
-                            $res->Result = AroundHotelMember($Latitude, $Longtitude, $CheckInDate);
+                            $res->Result = AroundHotelMember($Latitude, $Longitude, $CheckInDate);
                             $res->IsSuccess = TRUE;
                             $res->Code = 201;
                             $res->Message = "회원 위치 기반 호텔 불러오기 성공";
@@ -126,7 +126,7 @@ try {
             http_response_code(200);
             $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
             $Latitude = $_GET['Latitude'];
-            $Longtitude = $_GET['Longtitude'];
+            $Longitude = $_GET['Longitude'];
             $Scope = 1;
             $CheckInDate = date("Y/m/d");
             $CheckOutDate = date("Y-m-d", strtotime("+1 day", strtotime($CheckInDate)));
@@ -140,7 +140,7 @@ try {
             if($_GET['Scope'] != null) {
                 $Scope = $_GET['Scope'];
             }
-            if($Latitude == null || $Longtitude == null) {
+            if($Latitude == null || $Longitude == null) {
                 $res->IsSuccess = FALSE;
                 $res->Code = 400;
                 $res->Message = "올바른 위도와 경도를 입력하세요";
@@ -164,7 +164,7 @@ try {
                         break;
                     }
                     if ($jwt == null) { // 비회원
-                        $res->Result = aroundMap($Latitude, $Longtitude, $Scope, $CheckInDate);
+                        $res->Result = aroundMap($Latitude, $Longitude, $Scope, $CheckInDate);
                         $res->IsSuccess = TRUE;
                         $res->Code = 200;
                         $res->Message = "비회원 위치 기반 지도 불러오기 성공";
@@ -178,7 +178,7 @@ try {
                             echo json_encode($res, JSON_NUMERIC_CHECK);
                             return;
                         } else {
-                            $res->Result = aroundMapMember($Latitude, $Longtitude, $Scope, $CheckInDate);
+                            $res->Result = aroundMapMember($Latitude, $Longitude, $Scope, $CheckInDate);
                             $res->IsSuccess = TRUE;
                             $res->Code = 201;
                             $res->Message = "회원 위치 기반 지도 불러오기 성공";

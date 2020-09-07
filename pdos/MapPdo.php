@@ -1,6 +1,6 @@
 <?php
 
-function AroundMotelMember($Latitude, $Longtitude, $CheckInDate)
+function AroundMotelMember($Latitude, $Longitude, $CheckInDate)
 {
     $pdo = pdoSqlConnect();
     $query = "SELECT 
@@ -11,7 +11,7 @@ AR1.AccomIdx,
     AR1.AccomThumbnailUrl,
     AR1.AccomName,
     AR1.AccomLatitude,
-    AR1.AccomLongtitude,
+    AR1.AccomLongitude,
     CASE
         WHEN
             DAYOFWEEK(?) = 2
@@ -54,7 +54,7 @@ AR1.AccomIdx,
     END AS AllDayPrice
 FROM 
 (SELECT Accommodation.RegionIdx, Accommodation.AccomIdx, Accommodation.AccomName, Accommodation.AccomType, Accommodation.AccomIntroduction, Accommodation.AccomThumbnailUrl, Accommodation.AccomAddress,
-	Accommodation.AccomTheme, Accommodation.AccomGuide, Accommodation.ReserveInfo, Accommodation.AccomLatitude, Accommodation.AccomLongtitude, Accommodation.isDeleted
+	Accommodation.AccomTheme, Accommodation.AccomGuide, Accommodation.ReserveInfo, Accommodation.AccomLatitude, Accommodation.AccomLongitude, Accommodation.isDeleted
 FROM (Accommodation
     JOIN Region USING (RegionIdx))) as AR1
 JOIN (
@@ -92,7 +92,7 @@ GROUP BY A1.AccomIdx3, A1.AllDayWeekdayTime, A1.AllDayWeekendTime,
  WHERE
         AR1.AccomType = 'M'
         AND AR1.isDeleted = 'N'
-		AND (6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AR1.AccomLatitude)) * COS(RADIANS(AR1.AccomLongtitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AR1.AccomLatitude)))) < 10
+		AND (6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AR1.AccomLatitude)) * COS(RADIANS(AR1.AccomLongitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AR1.AccomLatitude)))) < 10
 ) AS a1 
 
         JOIN
@@ -112,7 +112,7 @@ GROUP BY A1.AccomIdx3, A1.AllDayWeekdayTime, A1.AllDayWeekendTime,
     $st = $pdo->prepare($query);
     $st->execute([$CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
         $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
-        $Latitude,$Longtitude, $Latitude]);
+        $Latitude,$Longitude, $Latitude]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
@@ -122,7 +122,7 @@ GROUP BY A1.AccomIdx3, A1.AllDayWeekdayTime, A1.AllDayWeekendTime,
     return $res;
 }
 
-function AroundMotel($Latitude, $Longtitude, $CheckInDate)
+function AroundMotel($Latitude, $Longitude, $CheckInDate)
 {
     $pdo = pdoSqlConnect();
     $query = "SELECT 
@@ -174,7 +174,7 @@ AR1.AccomIdx,
     END AS AllDayPrice
 FROM 
 (SELECT Accommodation.RegionIdx, Accommodation.AccomIdx, Accommodation.AccomName, Accommodation.AccomType, Accommodation.AccomIntroduction, Accommodation.AccomThumbnailUrl, Accommodation.AccomAddress,
-	Accommodation.AccomTheme, Accommodation.AccomGuide, Accommodation.ReserveInfo, Accommodation.AccomLatitude, Accommodation.AccomLongtitude, Accommodation.isDeleted
+	Accommodation.AccomTheme, Accommodation.AccomGuide, Accommodation.ReserveInfo, Accommodation.AccomLatitude, Accommodation.AccomLongitude, Accommodation.isDeleted
 FROM (Accommodation
     JOIN Region USING (RegionIdx))) as AR1
 JOIN (
@@ -212,7 +212,7 @@ GROUP BY A1.AccomIdx3, A1.AllDayWeekdayTime, A1.AllDayWeekendTime,
  WHERE
 		AR1.AccomType = 'M'
         AND AR1.isDeleted = 'N'
-		AND (6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AR1.AccomLatitude)) * COS(RADIANS(AR1.AccomLongtitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AR1.AccomLatitude)))) < 10
+		AND (6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AR1.AccomLatitude)) * COS(RADIANS(AR1.AccomLongitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AR1.AccomLatitude)))) < 10
 ) AS a1
 JOIN
 (SELECT 
@@ -231,7 +231,7 @@ JOIN
     $st = $pdo->prepare($query);
     $st->execute([$CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
         $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
-        $Latitude, $Longtitude, $Latitude]);
+        $Latitude, $Longitude, $Latitude]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
@@ -242,7 +242,7 @@ JOIN
 }
 
 
-function AroundHotel($Latitude, $Longtitude, $CheckInDate)
+function AroundHotel($Latitude, $Longitude, $CheckInDate)
 {
     $pdo = pdoSqlConnect();
     $query = "
@@ -254,7 +254,7 @@ AR1.AccomIdx,
     AR1.AccomThumbnailUrl,
     AR1.AccomName,
     AR1.AccomLatitude,
-    AR1.AccomLongtitude,
+    AR1.AccomLongitude,
     CASE
         WHEN
             DAYOFWEEK(?) = 2
@@ -277,7 +277,7 @@ AR1.AccomIdx,
     END AS AllDayPrice
 FROM 
 (SELECT Accommodation.RegionIdx, Accommodation.AccomIdx, Accommodation.AccomName, Accommodation.AccomType, Accommodation.AccomIntroduction, Accommodation.AccomThumbnailUrl, Accommodation.AccomAddress,
-	Accommodation.AccomTheme, Accommodation.AccomGuide, Accommodation.ReserveInfo, Accommodation.AccomLatitude, Accommodation.AccomLongtitude, Accommodation.isDeleted
+	Accommodation.AccomTheme, Accommodation.AccomGuide, Accommodation.ReserveInfo, Accommodation.AccomLatitude, Accommodation.AccomLongitude, Accommodation.isDeleted
 FROM (Accommodation
     JOIN Region USING (RegionIdx))) as AR1
 JOIN (SELECT *
@@ -298,7 +298,7 @@ GROUP BY A1.AccomIdx3, A1.AllDayWeekdayTime, A1.AllDayWeekendTime,
  WHERE
 		AR1.AccomType = 'H'
         AND AR1.isDeleted = 'N'
-		AND (6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AR1.AccomLatitude)) * COS(RADIANS(AR1.AccomLongtitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AR1.AccomLatitude)))) < 10
+		AND (6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AR1.AccomLatitude)) * COS(RADIANS(AR1.AccomLongitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AR1.AccomLatitude)))) < 10
 ) AS a1
 JOIN
 (SELECT 
@@ -317,7 +317,7 @@ JOIN
 
     $st = $pdo->prepare($query);
     $st->execute([$CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
-        $Latitude, $Longtitude, $Latitude]);
+        $Latitude, $Longitude, $Latitude]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
@@ -327,7 +327,7 @@ JOIN
     return $res;
 }
 
-function AroundHotelMember($Latitude, $Longtitude, $CheckInDate)
+function AroundHotelMember($Latitude, $Longitude, $CheckInDate)
 {
     $pdo = pdoSqlConnect();
     $query = "SELECT 
@@ -338,7 +338,7 @@ AR1.AccomIdx,
     AR1.AccomThumbnailUrl,
     AR1.AccomName,
     AR1.AccomLatitude,
-    AR1.AccomLongtitude,
+    AR1.AccomLongitude,
     CASE
         WHEN
             DAYOFWEEK(?) = 2
@@ -361,7 +361,7 @@ AR1.AccomIdx,
     END AS AllDayPrice
 FROM 
 (SELECT Accommodation.RegionIdx, Accommodation.AccomIdx, Accommodation.AccomName, Accommodation.AccomType, Accommodation.AccomIntroduction, Accommodation.AccomThumbnailUrl, Accommodation.AccomAddress,
-	Accommodation.AccomTheme, Accommodation.AccomGuide, Accommodation.ReserveInfo, Accommodation.AccomLatitude, Accommodation.AccomLongtitude, Accommodation.isDeleted
+	Accommodation.AccomTheme, Accommodation.AccomGuide, Accommodation.ReserveInfo, Accommodation.AccomLatitude, Accommodation.AccomLongitude, Accommodation.isDeleted
 FROM (Accommodation
     JOIN Region USING (RegionIdx))) as AR1
 JOIN (SELECT *
@@ -382,7 +382,7 @@ GROUP BY A1.AccomIdx3, A1.AllDayWeekdayTime, A1.AllDayWeekendTime,
  WHERE
 		AR1.AccomType = 'H'
         AND AR1.isDeleted = 'N'
-		AND (6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AR1.AccomLatitude)) * COS(RADIANS(AR1.AccomLongtitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AR1.AccomLatitude)))) < 10
+		AND (6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AR1.AccomLatitude)) * COS(RADIANS(AR1.AccomLongitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AR1.AccomLatitude)))) < 10
 ) AS a1
 JOIN
 (SELECT 
@@ -400,7 +400,7 @@ JOIN
 
     $st = $pdo->prepare($query);
     $st->execute([$CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
-        $Latitude, $Longtitude, $Latitude]);
+        $Latitude, $Longitude, $Latitude]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
@@ -410,10 +410,10 @@ JOIN
     return $res;
 }
 
-function aroundMap($Latitude, $Longtitude, $Scope, $CheckInDate)
+function aroundMap($Latitude, $Longitude, $Scope, $CheckInDate)
 {
     $pdo = pdoSqlConnect();
-    $query = "SELECT Accommodation.AccomIdx, AccomLatitude, AccomLongtitude,
+    $query = "SELECT Accommodation.AccomIdx, AccomLatitude, AccomLongitude,
 	CASE 
 		WHEN 
 			(DAYOFWEEK(?) > 1 && DAYOFWEEK(?) < 6)
@@ -428,10 +428,10 @@ FROM Accommodation join (Select
 		AllDayPrice
 	GROUP BY AllDayPrice.AccomIdx) A1 On (Accommodation.AccomIdx = A1.AccomIdx)
 WHERE
-	(6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AccomLatitude)) * COS(RADIANS(AccomLongtitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AccomLatitude)))) < ?;";
+	(6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AccomLatitude)) * COS(RADIANS(AccomLongitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AccomLatitude)))) < ?;";
 
     $st = $pdo->prepare($query);
-    $st->execute([$CheckInDate, $CheckInDate, $Latitude, $Longtitude, $Latitude, $Scope]);
+    $st->execute([$CheckInDate, $CheckInDate, $Latitude, $Longitude, $Latitude, $Scope]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
@@ -441,10 +441,10 @@ WHERE
     return $res;
 }
 
-function aroundMapMember($Latitude, $Longtitude, $Scope, $CheckInDate)
+function aroundMapMember($Latitude, $Longitude, $Scope, $CheckInDate)
 {
     $pdo = pdoSqlConnect();
-    $query = "SELECT Accommodation.AccomIdx, AccomLatitude, AccomLongtitude,
+    $query = "SELECT Accommodation.AccomIdx, AccomLatitude, AccomLongitude,
 	CASE 
 		WHEN 
 			(DAYOFWEEK(?) > 1 && DAYOFWEEK(?) < 6)
@@ -459,10 +459,10 @@ FROM Accommodation join (Select
 		AllDayPrice
 	GROUP BY AllDayPrice.AccomIdx) A1 On (Accommodation.AccomIdx = A1.AccomIdx)
 WHERE
-	(6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AccomLatitude)) * COS(RADIANS(AccomLongtitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AccomLatitude)))) < ?;";
+	(6371 * ACOS(COS(RADIANS(?)) * COS(RADIANS(AccomLatitude)) * COS(RADIANS(AccomLongitude) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(AccomLatitude)))) < ?;";
 
     $st = $pdo->prepare($query);
-    $st->execute([$CheckInDate, $CheckInDate, $Latitude, $Longtitude, $Latitude, $Scope]);
+    $st->execute([$CheckInDate, $CheckInDate, $Latitude, $Longitude, $Latitude, $Scope]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 

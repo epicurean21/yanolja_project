@@ -43,6 +43,7 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/around-motels', ['MapController', 'aroundMotels']);
     $r->addRoute('GET', '/around-hotels', ['MapController', 'aroundHotels']);
     $r->addRoute('GET', '/around/map', ['MapController', 'aroundMap']);
+    $r->addRoute('GET', '/motels/{AccomIdx}', ['AccomController', 'getMotelDetail']);
 
 //    $r->addRoute('GET', '/users', 'get_all_users_handler');
 //    // {id} must be a number (\d+)

@@ -105,7 +105,7 @@ function isValidUser($id, $pw)
 function isValidUserId($id)
 {
     $pdo = pdoSqlConnect();
-    $query = "SELECT EXISTS(SELECT * FROM yanolja_test.User WHERE UserId= ?) AS exist;";
+    $query = "SELECT EXISTS(SELECT * FROM User WHERE UserId= ?) AS exist;";
 
     $st = $pdo->prepare($query);
     //    $st->execute([$param,$param]);
@@ -140,9 +140,9 @@ function getMotelGroupList()
 {
     $pdo = pdoSqlConnect();
     $query = "  
-                select cityIdx, cityName, MotelGroupName.MotelGroupIdx, MotelGroupName, Region.RegionIdx, RegionName
-from Region join MotelGroup on MotelGroup.RegionIdx = Region.RegionIdx
-join MotelGroupName on MotelGroup.MotelGroupIdx = MotelGroupName.MotelGroupIdx
+                select distinct cityIdx, cityName, MotelGroupName.MotelGroupIdx, MotelGroupName
+                from Region join MotelGroup on MotelGroup.RegionIdx = Region.RegionIdx
+                        join MotelGroupName on MotelGroup.MotelGroupIdx = MotelGroupName.MotelGroupIdx
     ";
 
     $st = $pdo->prepare($query);
@@ -160,7 +160,7 @@ join MotelGroupName on MotelGroup.MotelGroupIdx = MotelGroupName.MotelGroupIdx
 function createUser($UserId, $UserPwd, $UserContact)
 {
     $pdo = pdoSqlConnect();
-    $query = "INSERT INTO yanolja_test.User (UserId, UserPwd, UserName, UserBirth, UserContact, UserGender,
+    $query = "INSERT INTO User (UserId, UserPwd, UserName, UserBirth, UserContact, UserGender,
                                UserPoint, CreatedAt, UpdatedAt, isDeleted)
 VALUES (?, ?, ?, ?, ?, ?, default, default, default, default)";
 
@@ -174,24 +174,55 @@ VALUES (?, ?, ?, ?, ?, ?, default, default, default, default)";
 
 
 
-function myYanolja($UserId)
+function myYanolja($UserId, $UserIdx)
 {
     $pdo = pdoSqlConnect();
     $query = "SELECT 
     UserName,
-	UserCoupon.UserIdx,
+    User.UserIdx,
     User.UserPoint,
-    COUNT(UserCoupon.CouponIdx) as CouponCount
+    CASE 
+		WHEN
+			(SELECT EXISTS(
+					SELECT *     
+					FROM UserCoupon join Coupon Using (CouponIdx)
+					WHERE UserCoupon.UserIdx = ?) = 1)
+		THEN
+			(SELECT
+				COUNT(UserCoupon.CouponIdx)
+			FROM
+				UserCoupon Join Coupon using (CouponIdx)
+			WHERE
+				DATE(Coupon.EndDate) >= DATE(NOW())
+				AND Coupon.isDeleted = 'N'
+				AND UserCoupon.UserIdx = ?)
+		ELSE
+			0
+	END as CouponCount
 FROM
     User
         JOIN
     (UserCoupon
-    JOIN Coupon USING (CouponIdx)) ON (User.UserIdx = UserCoupon.UserIdx)
+    JOIN Coupon USING (CouponIdx))
 WHERE
-    DATE(Coupon.EndDate) >= DATE(NOW())
-        AND Coupon.isDeleted = 'N'
-	AND User.UserId = ?
-GROUP BY UserIdx;";
+	User.UserId = ?
+    Limit 1;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$UserIdx, $UserIdx, $UserId]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+function getUserIdx($UserId)
+{
+    $pdo = pdoSqlConnect();
+    $query = "SELECT UserIdx FROM User Where UserId = ?";
 
     $st = $pdo->prepare($query);
     $st->execute([$UserId]);
@@ -201,7 +232,7 @@ GROUP BY UserIdx;";
     $st = null;
     $pdo = null;
 
-    return $res;
+    return $res[0]['UserIdx'];
 }
 
 function isValidPwd($UserId, $UserPwd)
@@ -223,6 +254,41 @@ and UserPwd = ?) as exist;";
     return intval($res[0]['exist']);
 }
 
+function isValidMotel($AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "select exists (
+select AccomIdx from Accommodation 
+where AccomIdx = ? AND AccomType = 'M') as exist;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return intval($res[0]['exist']);
+}
+
+function isValidHotel($AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "select exists (
+select AccomIdx from Accommodation 
+where AccomIdx = ? AND AccomType = 'H') as exist;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return intval($res[0]['exist']);
+}
 
 function getUserInfo($UserId)
 {
