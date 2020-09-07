@@ -1,6 +1,6 @@
 <?php
 
-function getMotelPhoto($AccomIdx)
+function getAccomPhoto($AccomIdx)
 {
     $pdo = pdoSqlConnect();
     $query = "SELECT 
@@ -22,7 +22,7 @@ WHERE
     return $res;
 }
 
-function getMotelReview($AccomIdx)
+function getAccomReview($AccomIdx)
 {
     $pdo = pdoSqlConnect();
     $query = "SELECT 
@@ -46,7 +46,399 @@ WHERE
     return $res;
 }
 
-function getMotelReviewReply($AccomIdx)
+function getAccomReviewDetail($AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "SELECT 
+    AccommodationReview.UserIdx,
+    AccommodationReview.ReviewIdx,
+    UR.UserName,
+    UR.ReserveType,
+    AccommodationReview.ReviewContent,
+    AccommodationReview.OverallRating,
+    AccommodationReview.CreatedAt,
+    CASE
+        WHEN
+            AccommodationReview.IsPhotoReview = 'Y'
+        THEN
+            (SELECT 
+                    GROUP_CONCAT(PhotoUrl)
+                FROM
+                    ReviewPhoto
+                WHERE
+                    ReviewPhoto.ReviewIdx = AccommodationReview.ReviewIdx
+                GROUP BY ReviewIdx)
+    END AS ReviewPhoto,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT ReplyText
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
+	END as ReviewReply
+FROM
+    AccommodationReview
+        JOIN
+    (SELECT 
+        UserIdx, UserName, AccomIdx, ReserveType, ReserveIdx
+    FROM
+        User
+    JOIN Reservation USING (UserIdx)) UR ON (UR.UserIdx = AccommodationReview.UserIdx
+        AND UR.AccomIdx = AccommodationReview.AccomIdx)
+WHERE
+    AccommodationReview.AccomIdx = ? AND AccommodationReview.IsDeleted = 'N'
+    LIMIT 2;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+
+function getReviewsNewOrder($AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "SELECT 
+    AccommodationReview.UserIdx,
+    AccommodationReview.ReviewIdx,
+    UR.UserName,
+    UR.ReserveType,
+    AccommodationReview.ReviewContent,
+    AccommodationReview.OverallRating,
+    AccommodationReview.CreatedAt,
+    CASE
+        WHEN
+            AccommodationReview.IsPhotoReview = 'Y'
+        THEN
+            (SELECT 
+                    GROUP_CONCAT(PhotoUrl)
+                FROM
+                    ReviewPhoto
+                WHERE
+                    ReviewPhoto.ReviewIdx = AccommodationReview.ReviewIdx
+                GROUP BY ReviewIdx)
+    END AS ReviewPhoto,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT ReplyText
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
+	END as ReviewReply
+FROM
+    AccommodationReview
+        JOIN
+    (SELECT 
+        UserIdx, UserName, AccomIdx, ReserveType, ReserveIdx
+    FROM
+        User
+    JOIN Reservation USING (UserIdx)) UR ON (UR.UserIdx = AccommodationReview.UserIdx
+        AND UR.AccomIdx = AccommodationReview.AccomIdx)
+WHERE
+    AccommodationReview.AccomIdx = ?     AND AccommodationReview.IsDeleted = 'N'
+ORDER BY CreatedAt DESC;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+function getReviewsRatingHigh($AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "SELECT 
+    AccommodationReview.UserIdx,
+    AccommodationReview.ReviewIdx,
+    UR.UserName,
+    UR.ReserveType,
+    AccommodationReview.ReviewContent,
+    AccommodationReview.OverallRating,
+    AccommodationReview.CreatedAt,
+    CASE
+        WHEN
+            AccommodationReview.IsPhotoReview = 'Y'
+        THEN
+            (SELECT 
+                    GROUP_CONCAT(PhotoUrl)
+                FROM
+                    ReviewPhoto
+                WHERE
+                    ReviewPhoto.ReviewIdx = AccommodationReview.ReviewIdx
+                GROUP BY ReviewIdx)
+    END AS ReviewPhoto,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT ReplyText
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
+	END as ReviewReply
+FROM
+    AccommodationReview
+        JOIN
+    (SELECT 
+        UserIdx, UserName, AccomIdx, ReserveType, ReserveIdx
+    FROM
+        User
+    JOIN Reservation USING (UserIdx)) UR ON (UR.UserIdx = AccommodationReview.UserIdx
+        AND UR.AccomIdx = AccommodationReview.AccomIdx)
+WHERE
+    AccommodationReview.AccomIdx = ?    AND AccommodationReview.IsDeleted = 'N'
+ORDER BY OverallRating DESC;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+function getReviewsRatingLow($AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "SELECT 
+    AccommodationReview.UserIdx,
+    AccommodationReview.ReviewIdx,
+    UR.UserName,
+    UR.ReserveType,
+    AccommodationReview.ReviewContent,
+    AccommodationReview.OverallRating,
+    AccommodationReview.CreatedAt,
+    CASE
+        WHEN
+            AccommodationReview.IsPhotoReview = 'Y'
+        THEN
+            (SELECT 
+                    GROUP_CONCAT(PhotoUrl)
+                FROM
+                    ReviewPhoto
+                WHERE
+                    ReviewPhoto.ReviewIdx = AccommodationReview.ReviewIdx
+                GROUP BY ReviewIdx)
+    END AS ReviewPhoto,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT ReplyText
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
+	END as ReviewReply
+FROM
+    AccommodationReview
+        JOIN
+    (SELECT 
+        UserIdx, UserName, AccomIdx, ReserveType, ReserveIdx
+    FROM
+        User
+    JOIN Reservation USING (UserIdx)) UR ON (UR.UserIdx = AccommodationReview.UserIdx
+        AND UR.AccomIdx = AccommodationReview.AccomIdx)
+WHERE
+    AccommodationReview.AccomIdx = ?    AND AccommodationReview.IsDeleted = 'N'
+ORDER BY OverallRating;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+
+function getPhotoReviewsNewOrder($AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "SELECT 
+    AccommodationReview.UserIdx,
+    AccommodationReview.ReviewIdx,
+    UR.UserName,
+    UR.ReserveType,
+    AccommodationReview.ReviewContent,
+    AccommodationReview.OverallRating,
+    AccommodationReview.CreatedAt,
+    CASE
+        WHEN
+            AccommodationReview.IsPhotoReview = 'Y'
+        THEN
+            (SELECT 
+                    GROUP_CONCAT(PhotoUrl)
+                FROM
+                    ReviewPhoto
+                WHERE
+                    ReviewPhoto.ReviewIdx = AccommodationReview.ReviewIdx
+                GROUP BY ReviewIdx)
+    END AS ReviewPhoto,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT ReplyText
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
+	END as ReviewReply
+FROM
+    AccommodationReview
+        JOIN
+    (SELECT 
+        UserIdx, UserName, AccomIdx, ReserveType, ReserveIdx
+    FROM
+        User
+    JOIN Reservation USING (UserIdx)) UR ON (UR.UserIdx = AccommodationReview.UserIdx
+        AND UR.AccomIdx = AccommodationReview.AccomIdx)
+WHERE
+    AccommodationReview.AccomIdx = ?
+    AND AccommodationReview.IsPhotoReview = 'Y'
+    AND AccommodationReview.IsDeleted = 'N'
+ORDER BY CreatedAt DESC;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+function getPhotoReviewsRatingHigh($AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "SELECT 
+    AccommodationReview.UserIdx,
+    AccommodationReview.ReviewIdx,
+    UR.UserName,
+    UR.ReserveType,
+    AccommodationReview.ReviewContent,
+    AccommodationReview.OverallRating,
+    AccommodationReview.CreatedAt,
+    CASE
+        WHEN
+            AccommodationReview.IsPhotoReview = 'Y'
+        THEN
+            (SELECT 
+                    GROUP_CONCAT(PhotoUrl)
+                FROM
+                    ReviewPhoto
+                WHERE
+                    ReviewPhoto.ReviewIdx = AccommodationReview.ReviewIdx
+                GROUP BY ReviewIdx)
+    END AS ReviewPhoto,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT ReplyText
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
+	END as ReviewReply
+FROM
+    AccommodationReview
+        JOIN
+    (SELECT 
+        UserIdx, UserName, AccomIdx, ReserveType, ReserveIdx
+    FROM
+        User
+    JOIN Reservation USING (UserIdx)) UR ON (UR.UserIdx = AccommodationReview.UserIdx
+        AND UR.AccomIdx = AccommodationReview.AccomIdx)
+WHERE
+    AccommodationReview.AccomIdx = ? AND AccommodationReview.IsPhotoReview = 'Y'
+    AND AccommodationReview.IsDeleted = 'N'
+ORDER BY OverallRating DESC;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+function getPhotoReviewsRatingLow($AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "SELECT 
+    AccommodationReview.UserIdx,
+    AccommodationReview.ReviewIdx,
+    UR.UserName,
+    UR.ReserveType,
+    AccommodationReview.ReviewContent,
+    AccommodationReview.OverallRating,
+    AccommodationReview.CreatedAt,
+    CASE
+        WHEN
+            AccommodationReview.IsPhotoReview = 'Y'
+        THEN
+            (SELECT 
+                    GROUP_CONCAT(PhotoUrl)
+                FROM
+                    ReviewPhoto
+                WHERE
+                    ReviewPhoto.ReviewIdx = AccommodationReview.ReviewIdx
+                GROUP BY ReviewIdx)
+    END AS ReviewPhoto,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT ReplyText
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
+	END as ReviewReply
+FROM
+    AccommodationReview
+        JOIN
+    (SELECT 
+        UserIdx, UserName, AccomIdx, ReserveType, ReserveIdx
+    FROM
+        User
+    JOIN Reservation USING (UserIdx)) UR ON (UR.UserIdx = AccommodationReview.UserIdx
+        AND UR.AccomIdx = AccommodationReview.AccomIdx)
+WHERE
+    AccommodationReview.AccomIdx = ?
+    AND AccommodationReview.IsPhotoReview = 'Y'
+    AND AccommodationReview.IsDeleted = 'N'
+ORDER BY OverallRating;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+function getAccomReviewReply($AccomIdx)
 {
     $pdo = pdoSqlConnect();
     $query = "SELECT 
@@ -68,7 +460,7 @@ WHERE
     return $res;
 }
 
-function getMotelDetail($AccomIdx)
+function getAccomDetail($AccomIdx)
 {
     $pdo = pdoSqlConnect();
     $query = "SELECT AccomIdx, AccomName, AccomIntroduction, AccomThumbnailUrl, AccomContact,
@@ -87,6 +479,25 @@ WHERE AccomIdx = ?;";
     return $res;
 }
 
+function isAccomPicked($UserIdx, $AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "SELECT EXISTS(
+	SELECT UserIdx
+    FROM UserPick
+    WHERE AccomIdx = ? AND UserIdx = ? 
+    AND isDeleted = 'N') exist";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx, $UserIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res[0]['exist'];
+}
 
 function getMotelRoom($AccomIdx, $CheckInDate)
 {
@@ -113,14 +524,6 @@ SELECT
         THEN
             T1.PartTimeWeekdayPrice
         ELSE T1.PartTimeWeekendPrice
-    END AS PartTimePrice,
-    CASE
-        WHEN
-            (DAYOFWEEK(?) > 1
-                && DAYOFWEEK(?) < 6)
-        THEN
-            T1.MemberPartTimeWeekdayPrice
-        ELSE T1.MemberPartTimeWeekendPrice
     END AS PartTimePrice,
     CASE
         WHEN
@@ -176,7 +579,7 @@ WHERE
     $st = $pdo->prepare($query);
     $st->execute([$CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
         $CheckInDate, $CheckInDate,$CheckInDate, $CheckInDate,
-        $CheckInDate,$CheckInDate,$AccomIdx]);
+        $AccomIdx]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
@@ -187,6 +590,250 @@ WHERE
 }
 
 
+function getMotelRoomMember($AccomIdx, $CheckInDate)
+{
+    $pdo = pdoSqlConnect();
+    $query = "
+SELECT 
+    Room.RoomIdx,
+    Room.RoomName,
+    Room.StandardCapacity,
+    Room.MaxCapacity,
+    Room.RoomThumbnailUrl,
+    CASE
+        WHEN
+            (DAYOFWEEK(?) > 1
+                && DAYOFWEEK(?) < 6)
+        THEN
+            T1.WeekdayTime
+        ELSE T1.WeekendTime
+    END AS PartTime,
+    CASE
+        WHEN
+            (DAYOFWEEK(?) > 1
+                && DAYOFWEEK(?) < 6)
+        THEN
+            T1.MemberPartTimeWeekdayPrice
+        ELSE T1.MemberPartTimeWeekendPrice
+    END AS PartTimePrice,
+    CASE
+        WHEN
+            (DAYOFWEEK(?) > 1
+                && DAYOFWEEK(?) < 6)
+        THEN
+            T1.AllDayWeekdayTime
+        ELSE T1.AllDayWeekendTime
+    END AS AllDayTime,
+    CASE
+        WHEN
+            (DAYOFWEEK(?) > 1
+                && DAYOFWEEK(?) < 6)
+        THEN
+            T1.MemberAllDayWeekdayPrice
+        ELSE T1.MemberAllDayWeekendPrice
+    END AS AllDayPrice
+FROM
+    Room
+        JOIN
+    (SELECT 
+        PartTimeInfo.AccomIdx,
+            PartTimeInfo.WeekdayTime,
+            PartTimeInfo.WeekendTime,
+            PartTimeInfo.MemberWeekdayTime,
+            PartTimeInfo.MemberWeekendTime,
+            PartTimePrice.RoomIdx,
+            PartTimePrice.PartTimeWeekdayPrice,
+            PartTimePrice.PartTimeWeekendPrice,
+            PartTimePrice.MemberPartTimeWeekdayPrice,
+            PartTimePrice.MemberPartTimeWeekendPrice,
+            AllDayInfo.WeekdayTime AS AllDayWeekdayTime,
+            AllDayInfo.WeekendTime AS AllDayWeekendTime,
+            AllDayInfo.MemberWeekdayTime AS MemberAllDayWeekdayTime,
+            AllDayInfo.MemberWeekendTime AS MemberAllDayWeekendTime,
+            AllDayPrice.AllDayWeekdayPrice,
+            AllDayPrice.AllDayWeekendPrice,
+            AllDayPrice.MemberAllDayWeekdayPrice,
+            AllDayPrice.MemberAllDayWeekendPrice
+    FROM
+        (PartTimeInfo
+    JOIN PartTimePrice ON PartTimeInfo.AccomIdx = PartTimePrice.AccomIdx)
+    JOIN (AllDayInfo
+    JOIN AllDayPrice ON AllDayInfo.AccomIdx = AllDayPrice.AccomIdx) ON (PartTimeInfo.AccomIdx = AllDayInfo.AccomIdx
+        AND PartTimePrice.RoomIdx = AllDayPrice.RoomIdx)
+    WHERE
+        PartTimeInfo.AccomIdx = ?) AS T1
+WHERE
+    Room.RoomIdx = T1.RoomIdx
+        AND Room.AccomIdx = T1.AccomIdx
+        AND Room.isDeleted = 'N';";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
+        $CheckInDate, $CheckInDate,$CheckInDate, $CheckInDate,
+        $AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+function getHotelRoom($AccomIdx, $CheckInDate)
+{
+    $pdo = pdoSqlConnect();
+    $query = "SELECT 
+    Room.RoomIdx,
+    Room.RoomName,
+    Room.StandardCapacity,
+    Room.MaxCapacity,
+    Room.RoomThumbnailUrl,
+    CASE
+        WHEN
+            (DAYOFWEEK(?) > 1
+                && DAYOFWEEK(?) < 6)
+        THEN
+            T1.MemberAllDayWeekdayTime
+        ELSE T1.MemberAllDayWeekendTime
+    END AS AllDayTime,
+    CASE
+        WHEN
+            (DAYOFWEEK(?) > 1
+                && DAYOFWEEK(?) < 6)
+        THEN
+            T1.MemberAllDayWeekdayPrice
+        ELSE T1.MemberAllDayWeekendPrice
+    END AS AllDayPrice
+FROM
+    Room
+        JOIN
+    (SELECT 
+			AllDayInfo.AccomIdx,
+            AllDayPrice.RoomIdx,
+            AllDayInfo.WeekdayTime AS AllDayWeekdayTime,
+            AllDayInfo.WeekendTime AS AllDayWeekendTime,
+            AllDayInfo.MemberWeekdayTime AS MemberAllDayWeekdayTime,
+            AllDayInfo.MemberWeekendTime AS MemberAllDayWeekendTime,
+            AllDayPrice.AllDayWeekdayPrice,
+            AllDayPrice.AllDayWeekendPrice,
+            AllDayPrice.MemberAllDayWeekdayPrice,
+            AllDayPrice.MemberAllDayWeekendPrice
+    FROM
+       (AllDayInfo
+    JOIN AllDayPrice ON AllDayInfo.AccomIdx = AllDayPrice.AccomIdx) 
+    WHERE
+        AllDayInfo.AccomIdx = ?) AS T1
+WHERE
+    Room.RoomIdx = T1.RoomIdx
+        AND Room.AccomIdx = T1.AccomIdx
+        AND Room.isDeleted = 'N';";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
+        $AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+
+function getHotelRoomMember($AccomIdx, $CheckInDate)
+{
+    $pdo = pdoSqlConnect();
+    $query = "
+SELECT 
+    Room.RoomIdx,
+    Room.RoomName,
+    Room.StandardCapacity,
+    Room.MaxCapacity,
+    Room.RoomThumbnailUrl,
+    CASE
+        WHEN
+            (DAYOFWEEK(?) > 1
+                && DAYOFWEEK(?) < 6)
+        THEN
+            T1.WeekdayTime
+        ELSE T1.WeekendTime
+    END AS PartTime,
+    CASE
+        WHEN
+            (DAYOFWEEK(?) > 1
+                && DAYOFWEEK(?) < 6)
+        THEN
+            T1.MemberPartTimeWeekdayPrice
+        ELSE T1.MemberPartTimeWeekendPrice
+    END AS PartTimePrice,
+    CASE
+        WHEN
+            (DAYOFWEEK(?) > 1
+                && DAYOFWEEK(?) < 6)
+        THEN
+            T1.AllDayWeekdayTime
+        ELSE T1.AllDayWeekendTime
+    END AS AllDayTime,
+    CASE
+        WHEN
+            (DAYOFWEEK(?) > 1
+                && DAYOFWEEK(?) < 6)
+        THEN
+            T1.MemberAllDayWeekdayPrice
+        ELSE T1.MemberAllDayWeekendPrice
+    END AS AllDayPrice
+FROM
+    Room
+        JOIN
+    (SELECT 
+        PartTimeInfo.AccomIdx,
+            PartTimeInfo.WeekdayTime,
+            PartTimeInfo.WeekendTime,
+            PartTimeInfo.MemberWeekdayTime,
+            PartTimeInfo.MemberWeekendTime,
+            PartTimePrice.RoomIdx,
+            PartTimePrice.PartTimeWeekdayPrice,
+            PartTimePrice.PartTimeWeekendPrice,
+            PartTimePrice.MemberPartTimeWeekdayPrice,
+            PartTimePrice.MemberPartTimeWeekendPrice,
+            AllDayInfo.WeekdayTime AS AllDayWeekdayTime,
+            AllDayInfo.WeekendTime AS AllDayWeekendTime,
+            AllDayInfo.MemberWeekdayTime AS MemberAllDayWeekdayTime,
+            AllDayInfo.MemberWeekendTime AS MemberAllDayWeekendTime,
+            AllDayPrice.AllDayWeekdayPrice,
+            AllDayPrice.AllDayWeekendPrice,
+            AllDayPrice.MemberAllDayWeekdayPrice,
+            AllDayPrice.MemberAllDayWeekendPrice
+    FROM
+        (PartTimeInfo
+    JOIN PartTimePrice ON PartTimeInfo.AccomIdx = PartTimePrice.AccomIdx)
+    JOIN (AllDayInfo
+    JOIN AllDayPrice ON AllDayInfo.AccomIdx = AllDayPrice.AccomIdx) ON (PartTimeInfo.AccomIdx = AllDayInfo.AccomIdx
+        AND PartTimePrice.RoomIdx = AllDayPrice.RoomIdx)
+    WHERE
+        PartTimeInfo.AccomIdx = ?) AS T1
+WHERE
+    Room.RoomIdx = T1.RoomIdx
+        AND Room.AccomIdx = T1.AccomIdx
+        AND Room.isDeleted = 'N';";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
+        $CheckInDate, $CheckInDate,$CheckInDate, $CheckInDate,
+        $AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+
+/*여기부턴 현재 베타
 function searchMotelByArea($RegionIdx, $startDate, $endDate, $peopleNum)
 {
     $pdo = pdoSqlConnect();
@@ -535,4 +1182,6 @@ function isValidRegion($RegionGroupIdx) {
     $pdo = null;
 
     return intval($res[0]['exist']);
+
 }
+*/

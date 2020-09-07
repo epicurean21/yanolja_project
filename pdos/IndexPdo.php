@@ -290,6 +290,24 @@ where AccomIdx = ? AND AccomType = 'H') as exist;";
     return intval($res[0]['exist']);
 }
 
+function isValidAccom($AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "select exists (
+select AccomIdx from Accommodation 
+where AccomIdx = ?) as exist;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return intval($res[0]['exist']);
+}
+
 function getUserInfo($UserId)
 {
     $pdo = pdoSqlConnect();
