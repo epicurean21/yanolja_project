@@ -29,6 +29,7 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('POST', '/jwt', ['MainController', 'createJwt']);
     $r->addRoute('GET', '/motels', ['WoodieController', 'getMotels']);
     $r->addRoute('GET', '/motel-groups', ['IndexController', 'getMotelGroupList']);
+    $r->addRoute('GET', '/areas', ['WoodieController', 'getAreas']);
     $r->addRoute('POST', '/users', ['IndexController', 'createUser']);
 
 

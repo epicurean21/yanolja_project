@@ -871,7 +871,40 @@ function getMotelRooms($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $chi
 //    }
 //
 //}
+/*
+ * ********************************************************************
+ */
 
+function getAreas(){
+    $pdo = pdoSqlConnect();
+    $query = "
+                select distinct cityIdx, cityName, MotelGroup.MotelGroupIdx as GroupIdx , MotelGroupName as GroupName
+                from Region
+                 join MotelGroup on MotelGroup.RegionIdx = Region.RegionIdx
+                 join MotelGroupName on MotelGroupName.MotelGroupIdx = MotelGroup.MotelGroupIdx
+    ";
+
+    $st = $pdo->prepare($query);
+    //    $st->execute([$param,$param]);
+    $st->execute([]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    /*
+     * 평일,회원
+     * 주말,회원
+     * 평일,비회원
+     * 주말,비회원
+     */
+   return $res;
+}
+
+/*
+ * *****************************************************************
+ */
 //지역 그룹별/퇴실일 기준/숙박 가능/모텔별/비회원/평일/최소가격
 function getMinWeekdayPrice($AccomIdx, $endAt)
 {
