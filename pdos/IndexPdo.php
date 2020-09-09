@@ -312,16 +312,14 @@ function getUserInfo($UserId)
 {
     $pdo = pdoSqlConnect();
     $query = "SELECT UserName, UserId, UserPwd, UserContact
-    FROM User WHERE userId = ?";
+    FROM User WHERE UserId = ?";
 
     $st = $pdo->prepare($query);
     $st->execute([$UserId]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
-
     $st = null;
     $pdo = null;
-
     return $res;
 }
 

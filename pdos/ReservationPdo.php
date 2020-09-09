@@ -105,7 +105,7 @@ WHERE
     $res = $st->fetchAll();
 
     $st = null;
-    $pdo = null; 
+    $pdo = null;
 
     return $res;
 }

@@ -58,7 +58,8 @@ function getAccomInfo($accomIdx)
 {
     $pdo = pdoSqlConnect();
     $query = "
-                select
+                select AccomName,
+                       AccomThumbnailUrl,
                        If(isnull(t1.avgRating), 0, avgRating) as avgRating,
                        If(isnull(count(*)), 0, count(*)) as numOfReview
                 from Accommodation
@@ -649,6 +650,11 @@ function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
 
         // AccomIdx 추가
         $motels[$i]['AccomIdx'] = $motelRoomInfo[$roomCount]['AccomIdx'];
+        $motels[$i]['AccomName'] = getAccomInfo($motels[$i]['AccomIdx'])['AccomName'];
+        $motels[$i]['AccomThumbnailUrl'] = getAccomInfo($motels[$i]['AccomIdx'])['AccomThumbnailUrl'];
+        $motels[$i]['AvgRating'] = getAccomInfo($motels[$i]['AccomIdx'])['avgRating'];
+        $motels[$i]['NumOfReview'] = getAccomInfo($motels[$i]['AccomIdx'])['numOfReview'];
+        $motels[$i]['NumOfUserPick'] = getUserPick($motels[$i]['AccomIdx']);
 
         // 숙소당 방 개수맘큼 돈다.
         for ($j = 0; $j < $numOfRoomByAccom[$i]; $j++) {
@@ -722,9 +728,7 @@ function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
             $motels[$i]['IsAllDayAvailable'] = 'F';
         }
 
-        $motels[$i]['AvgRating'] = getAccomInfo($motels[$i]['AccomIdx'])['avgRating'];
-        $motels[$i]['NumOfReview'] = getAccomInfo($motels[$i]['AccomIdx'])['numOfReview'];
-        $motels[$i]['NumOfUserPick'] = getUserPick($motels[$i]['AccomIdx']);
+
         $accomTag = getAccomTag($motels[$i]['AccomIdx']);
         if(empty($accomTag)){
             $motels[$i]['AccomTag'] = array();

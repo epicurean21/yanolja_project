@@ -24,7 +24,7 @@ try {
                 $res->Message = "올바른 날짜를 입력하세요";
                 echo json_encode($res, JSON_NUMERIC_CHECK);
                 break;
-            }  
+            }
 
             if ($_GET['CheckOutDate'] != null) {
                 $CheckOutDate = $_GET['CheckOutDate'];
@@ -80,15 +80,16 @@ try {
 
         case "orderP":
             http_response_code(200);
+            echo "Hello";
             $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
-            $AccomIdx = $vars['AccomIdx'];
-            $RoomIdx = $vars['RoomIdx'];
+            $AccomIdx = $req->AccomIdx;
+            $RoomIdx = $req->RoomIdx;
             $CheckInDate = date("Y/m/d");
             $CheckOutDate = date("Y-m-d", strtotime("+1 day", strtotime($CheckInDate)));
-            $ReserveName = $vars['ReserveName'];
-            $ReserveContact = $vars['ReserveContact'];
-            $ReserveType = "P";
-            $VisitExists = $vars['VisitExists'];
+            $ReserveName = $req->ReserveName;
+            $ReserveContact = $req->ReserveContact;
+            $ReserveType = 'P';
+            $VisitExists = $req->VisitExists;
             $VisitName = "";
             $VisitContact = "";
             $Transportation = null;
@@ -112,7 +113,7 @@ try {
             } // 회원
 
             if($VisitExists != null && $VisitExists == 'Y') {
-                $VisitName = $vars['VisitName'];
+                $VisitName = $req->VisitName;
                 $VisitContact = $vars['VisitContact'];
             } // 방문자 존재여부
 
@@ -302,53 +303,6 @@ try {
 
         case "orderA":
             http_response_code(200);
-            $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
-            $AccomIdx = $vars['AccomIdx'];
-            $RoomIdx = $vars['RoomIdx'];
-            $CheckInDate = date("Y/m/d");
-            $CheckOutDate = date("Y-m-d", strtotime("+1 day", strtotime($CheckInDate)));
-            $ReserveName = $vars['ReserveName'];
-            $ReserveContact = $vars['ReserveContact'];
-            $VisitExists = $vars['VisitExists'];
-            $VisitName = "";
-            $VisitContact = "";
-            $Transportation = "";
-            if($VisitExists != null && $VisitExists == 'Y') {
-                $VisitName = $vars['VisitName'];
-                $VisitContact = $vars['VisitContact'];
-            }
-
-            if($vars['Transportation'] == null) {
-                $res->IsSuccess = FALSE;
-                $res->Code = 400;
-                $res->Message = "방문 방법 (교통)을 입력해주세요";
-                echo json_encode($res, JSON_NUMERIC_CHECK);
-                break;
-            }
-            else {
-                $Transportation = vars['Transportation'];
-            }
-
-            if($vars['CheckInDate'] != null) {
-                $res->IsSuccess = FALSE;
-                $res->Code = 402;
-                $res->Message = "올바른 날짜를 입력하세요";
-                echo json_encode($res, JSON_NUMERIC_CHECK);
-                break;
-            }
-            else {
-                $CheckInDate = $vars['CheckInDate'];
-            }
-            if($vars['CheckOutDate'] != null) {
-                $res->IsSuccess = FALSE;
-                $res->Code = 402;
-                $res->Message = "올바른 날짜를 입력하세요";
-                echo json_encode($res, JSON_NUMERIC_CHECK);
-                break;
-            }
-            else {
-                $CheckOutDate = $vars['CheckOutDate'];
-            }
 
             break;
     }

@@ -52,6 +52,7 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
 
     $r->addRoute('GET', '/reserve-p', ['ReservationController', 'reserveP']);
     $r->addRoute('GET', '/reserve-a', ['ReservationController', 'reserveA']);
+    $r->addRoute('POST', '/reserve-p/order', ['IndexController', 'orderP']);
 
 //    $r->addRoute('GET', '/users', 'get_all_users_handler');
 //    // {id} must be a number (\d+)
