@@ -2,7 +2,6 @@
 require './pdos/DatabasePdo.php';
 require './pdos/IndexPdo.php';
 require './pdos/WoodiePdo.php';
-require './pdos/ReservationPdo.php';
 require './pdos/MapPdo.php';
 require './pdos/AccomPdo.php';
 
