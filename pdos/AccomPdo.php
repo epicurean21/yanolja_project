@@ -680,7 +680,7 @@ WHERE
     return $res;
 }
 
-function getHotelRoom($AccomIdx, $CheckInDate)
+function getHotelRoom($AccomIdx, $CheckInDate, $CheckOutDate)
 {
     $pdo = pdoSqlConnect();
     $query = "SELECT 
@@ -694,17 +694,36 @@ function getHotelRoom($AccomIdx, $CheckInDate)
             (DAYOFWEEK(?) > 1
                 && DAYOFWEEK(?) < 6)
         THEN
-            T1.MemberAllDayWeekdayTime
-        ELSE T1.MemberAllDayWeekendTime
+            T1.AllDayWeekdayTime
+        ELSE T1.AllDayWeekendTime
     END AS AllDayTime,
-    CASE
-        WHEN
-            (DAYOFWEEK(?) > 1
-                && DAYOFWEEK(?) < 6)
-        THEN
-            T1.MemberAllDayWeekdayPrice
-        ELSE T1.MemberAllDayWeekendPrice
-    END AS AllDayPrice
+        CASE
+            WHEN
+                (SELECT EXISTS(
+                    SELECT *
+                    FROM Reservation
+                    WHERE Reservation.AccomIdx = ?
+                    AND Reservation.RoomIdx = Room.RoomIdx
+                    AND Reservation.isDeleted = 'N'
+                    AND (
+                            ((timestampdiff(DAY, Reservation.CheckInDate, ?) <= 1)
+                            AND (timestampdiff(DAY, Reservation.CheckOutDate, ?) <= 1))
+                                OR
+                            ((timestampdiff(DAY, ?, Reservation.CheckInDate) >= 1)
+                            AND (timestampdiff(DAY, ?, Reservation.CheckOutDate) >= 1)))
+                    )) = 0
+            THEN
+                CASE
+                    WHEN
+                        (DAYOFWEEK(?) > 1
+                            && DAYOFWEEK(?) < 6)
+                    THEN
+                        T1.AllDayWeekdayPrice
+                    ELSE T1.AllDayWeekendPrice
+                END
+            ELSE
+                '예약완료'
+        END as AllDayPrice
 FROM
     Room
         JOIN
@@ -730,8 +749,8 @@ WHERE
         AND Room.isDeleted = 'N';";
 
     $st = $pdo->prepare($query);
-    $st->execute([$CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
-        $AccomIdx]);
+    $st->execute([$CheckInDate, $CheckInDate, $AccomIdx, $CheckOutDate, $CheckOutDate, $CheckInDate,
+        $CheckInDate, $CheckInDate, $CheckInDate, $AccomIdx]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
@@ -742,11 +761,10 @@ WHERE
 }
 
 
-function getHotelRoomMember($AccomIdx, $CheckInDate)
+function getHotelRoomMember($AccomIdx, $CheckInDate, $CheckOutDate)
 {
     $pdo = pdoSqlConnect();
-    $query = "
-SELECT 
+    $query = "SELECT 
     Room.RoomIdx,
     Room.RoomName,
     Room.StandardCapacity,
@@ -757,47 +775,42 @@ SELECT
             (DAYOFWEEK(?) > 1
                 && DAYOFWEEK(?) < 6)
         THEN
-            T1.WeekdayTime
-        ELSE T1.WeekendTime
-    END AS PartTime,
-    CASE
-        WHEN
-            (DAYOFWEEK(?) > 1
-                && DAYOFWEEK(?) < 6)
-        THEN
-            T1.MemberPartTimeWeekdayPrice
-        ELSE T1.MemberPartTimeWeekendPrice
-    END AS PartTimePrice,
-    CASE
-        WHEN
-            (DAYOFWEEK(?) > 1
-                && DAYOFWEEK(?) < 6)
-        THEN
             T1.AllDayWeekdayTime
         ELSE T1.AllDayWeekendTime
     END AS AllDayTime,
-    CASE
-        WHEN
-            (DAYOFWEEK(?) > 1
-                && DAYOFWEEK(?) < 6)
-        THEN
-            T1.MemberAllDayWeekdayPrice
-        ELSE T1.MemberAllDayWeekendPrice
-    END AS AllDayPrice
+     CASE
+		WHEN
+			(SELECT EXISTS(
+				SELECT *
+				FROM Reservation
+				WHERE Reservation.AccomIdx = ?
+				AND Reservation.RoomIdx = Room.RoomIdx
+				AND Reservation.isDeleted = 'N'
+				AND (
+						((timestampdiff(DAY, Reservation.CheckInDate, ?) <= 1)
+						AND (timestampdiff(DAY, Reservation.CheckOutDate, ?) <= 1))
+							OR
+						((timestampdiff(DAY, ?, Reservation.CheckInDate) >= 1)
+						AND (timestampdiff(DAY, ?, Reservation.CheckOutDate) >= 1)))
+				)) = 0
+		THEN
+			CASE
+				WHEN
+					(DAYOFWEEK(?) > 1
+						&& DAYOFWEEK(?) < 6)
+				THEN
+					T1.MemberAllDayWeekdayPrice
+				ELSE T1.MemberAllDayWeekendPrice
+			END
+		ELSE
+			'예약완료'
+	END as AllDayPrice
 FROM
     Room
         JOIN
     (SELECT 
-        PartTimeInfo.AccomIdx,
-            PartTimeInfo.WeekdayTime,
-            PartTimeInfo.WeekendTime,
-            PartTimeInfo.MemberWeekdayTime,
-            PartTimeInfo.MemberWeekendTime,
-            PartTimePrice.RoomIdx,
-            PartTimePrice.PartTimeWeekdayPrice,
-            PartTimePrice.PartTimeWeekendPrice,
-            PartTimePrice.MemberPartTimeWeekdayPrice,
-            PartTimePrice.MemberPartTimeWeekendPrice,
+			AllDayInfo.AccomIdx,
+            AllDayPrice.RoomIdx,
             AllDayInfo.WeekdayTime AS AllDayWeekdayTime,
             AllDayInfo.WeekendTime AS AllDayWeekendTime,
             AllDayInfo.MemberWeekdayTime AS MemberAllDayWeekdayTime,
@@ -807,22 +820,18 @@ FROM
             AllDayPrice.MemberAllDayWeekdayPrice,
             AllDayPrice.MemberAllDayWeekendPrice
     FROM
-        (PartTimeInfo
-    JOIN PartTimePrice ON PartTimeInfo.AccomIdx = PartTimePrice.AccomIdx)
-    JOIN (AllDayInfo
-    JOIN AllDayPrice ON AllDayInfo.AccomIdx = AllDayPrice.AccomIdx) ON (PartTimeInfo.AccomIdx = AllDayInfo.AccomIdx
-        AND PartTimePrice.RoomIdx = AllDayPrice.RoomIdx)
+       (AllDayInfo
+    JOIN AllDayPrice ON AllDayInfo.AccomIdx = AllDayPrice.AccomIdx) 
     WHERE
-        PartTimeInfo.AccomIdx = ?) AS T1
+        AllDayInfo.AccomIdx = ?) AS T1
 WHERE
     Room.RoomIdx = T1.RoomIdx
         AND Room.AccomIdx = T1.AccomIdx
         AND Room.isDeleted = 'N';";
 
     $st = $pdo->prepare($query);
-    $st->execute([$CheckInDate, $CheckInDate, $CheckInDate, $CheckInDate,
-        $CheckInDate, $CheckInDate,$CheckInDate, $CheckInDate,
-        $AccomIdx]);
+    $st->execute([$CheckInDate, $CheckInDate, $AccomIdx, $CheckOutDate, $CheckOutDate, $CheckInDate,
+        $CheckInDate, $CheckInDate, $CheckInDate, $AccomIdx]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 

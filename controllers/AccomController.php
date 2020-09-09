@@ -318,7 +318,7 @@ try {
                         $res->Result->PhotoCount = getAccomPhoto($AccomIdx);
                         $res->Result->ReviewReplyCount = getAccomReviewReply($AccomIdx);
                         $res->Result->AccomDetail = getAccomDetail($AccomIdx);
-                        $res->Result->HotelRoom = getHotelRoom($AccomIdx, $CheckInDate);
+                        $res->Result->HotelRoom = getHotelRoom($AccomIdx, $CheckInDate, $CheckOutDate);
                         $res->Result->OverallReview = getAccomReview($AccomIdx);
                         $res->Result->ReviewDetail = getAccomReviewDetail($AccomIdx);
                         $res->IsSuccess = TRUE;
@@ -340,7 +340,7 @@ try {
                             $res->Result->ReviewReplyCount = getAccomReviewReply($AccomIdx);
                             $res->Result->IsPicked = isAccomPicked($UserIdx, $AccomIdx);
                             $res->Result->AccomDetail = getAccomDetail($AccomIdx);
-                            $res->Result->HotelRoom = getHotelRoomMember($AccomIdx, $CheckInDate);
+                            $res->Result->HotelRoom = getHotelRoomMember($AccomIdx, $CheckInDate, $CheckOutDate);
                             $res->Result->OverallReview = getAccomReview($AccomIdx);
                             $res->Result->ReviewDetail = getAccomReviewDetail($AccomIdx);
                             $res->IsSuccess = TRUE;
