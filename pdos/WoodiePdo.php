@@ -600,8 +600,6 @@ function getAllDayPrice($AccomIdx, $RoomIdx, $isMember, $dayType)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
 // 모텔 정보 화면 불러오기
 function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
 {
@@ -724,11 +722,18 @@ function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
             $motels[$i]['IsAllDayAvailable'] = 'F';
         }
 
+        $motels[$i]['AvgRating'] = getAccomInfo($motels[$i]['AccomIdx'])['avgRating'];
+        $motels[$i]['NumOfReview'] = getAccomInfo($motels[$i]['AccomIdx'])['numOfReview'];
+        $motels[$i]['NumOfUserPick'] = getUserPick($motels[$i]['AccomIdx']);
+        $motels[$i]['AccomTag'] = getAccomTag($motels[$i]['AccomIdx']);
+
+
     }
 
     return $motels;
 }
 
+// 해당지역의 인원 구성에 맞는 방들을 예약 현황 및 조회
 function getMotelRoomsInfo($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
 {
 
@@ -841,7 +846,6 @@ function getMotelRoomsInfo($isMember, $startAt, $endAt, $motelGroupIdx, $adult, 
             }
             else{
                 // 해당 객실의 숙박이 가능하지 않다면 => 이유1. 숙박 손님이 있다. / 이유2. 다음날 일찍 대실 예약 손님이 이미 있다.(가정 상황에서의 문제 발생)
-                //
                 $motelRoomlist[$i]['IsAllDayAvailable'] = 'F';
             }
         }
@@ -888,17 +892,12 @@ function getMotelRoomsInfo($isMember, $startAt, $endAt, $motelGroupIdx, $adult, 
                     $motelRoomlist[$i]['IsAllDayAvailable'] = 'F';
                 }
         }
-
-
-//        $motelRoomlist[$i]['AvgRating'] = getAccomInfo($nowAccomIdx)['avgRating'];
-//        $motelRoomlist[$i]['NumOfReview'] = getAccomInfo($nowAccomIdx)['numOfReview'];
-//        $motelRoomlist[$i]['NumOfUserPick'] = getUserPick($nowAccomIdx);
-//        $motelRoomlist[$i]['AccomTag'] = getAccomTag($nowAccomIdx);
     }
 
     return $motelRoomlist;
 }
 
+// 하단 네비게이션 바 지역별 버튼 => 지역리스트 출력
 function getAreas(){
     $pdo = pdoSqlConnect();
     $query = "
