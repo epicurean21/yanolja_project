@@ -59,7 +59,7 @@ function getAccomInfo($accomIdx)
     $pdo = pdoSqlConnect();
     $query = "
                 select
-                       avgRating,
+                       If(isnull(t1.avgRating), 0, avgRating) as avgRating,
                        If(isnull(count(*)), 0, count(*)) as numOfReview
                 from Accommodation
                          join (select AccommodationReview.AccomIdx, avg(OverallRating) as avgRating
@@ -90,9 +90,9 @@ function getAccomTag($AccomIdx)
 
     $pdo = pdoSqlConnect();
     $query = "
-                select TagIdx, TagName
-                from Accommodation join AccommodationTag on Accommodation.AccomIdx = AccommodationTag.AccomIdx
-                where Accommodation.AccomIdx = ?
+                select AccommodationTag.TagIdx, TagName
+                from AccommodationTag join TagList on AccommodationTag.TagIdx = TagList.TagIdx
+                where AccomIdx = ?
     ";
 
     $st = $pdo->prepare($query);
@@ -725,7 +725,14 @@ function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
         $motels[$i]['AvgRating'] = getAccomInfo($motels[$i]['AccomIdx'])['avgRating'];
         $motels[$i]['NumOfReview'] = getAccomInfo($motels[$i]['AccomIdx'])['numOfReview'];
         $motels[$i]['NumOfUserPick'] = getUserPick($motels[$i]['AccomIdx']);
-        $motels[$i]['AccomTag'] = getAccomTag($motels[$i]['AccomIdx']);
+        $accomTag = getAccomTag($motels[$i]['AccomIdx']);
+        if(empty($accomTag)){
+            $motels[$i]['AccomTag'] = array();
+        }
+        else{
+            $motels[$i]['AccomTag'] = $accomTag;
+        }
+
 
 
     }
