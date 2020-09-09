@@ -47,7 +47,7 @@ try {
             $res->result = getMotels($isMember, $_GET['startAt'], $_GET['endAt'], $_GET['motelGroupIdx'], $_GET['adult'], $_GET['child']);
             $res->isSuccess = TRUE;
             $res->code = 200;
-            $res->message = "지역그룹 모텔 불러오기 성공";
+            $res->message = "지역 모텔 불러오기 성공";
             echo json_encode($res, JSON_NUMERIC_CHECK);
             break;
         case "getAreas":

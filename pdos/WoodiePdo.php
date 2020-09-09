@@ -61,7 +61,8 @@ function getAccomInfo($accomIdx)
                 select AccomName,
                        AccomThumbnailUrl,
                        If(isnull(t1.avgRating), 0, avgRating) as avgRating,
-                       If(isnull(count(*)), 0, count(*)) as numOfReview
+                       If(isnull(count(*)), 0, count(*)) as numOfReview,
+                        GuideFromStation
                 from Accommodation
                          join (select AccommodationReview.AccomIdx, avg(OverallRating) as avgRating
                                from Accommodation
@@ -601,7 +602,7 @@ function getAllDayPrice($AccomIdx, $RoomIdx, $isMember, $dayType)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// 모텔 정보 화면 불러오기
+// 해당 지역의 조건에 맞는 모텔들 정보가져오기
 function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
 {
     // 0.  결과배열 선언 및 초기화
@@ -655,6 +656,7 @@ function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
         $motels[$i]['AvgRating'] = getAccomInfo($motels[$i]['AccomIdx'])['avgRating'];
         $motels[$i]['NumOfReview'] = getAccomInfo($motels[$i]['AccomIdx'])['numOfReview'];
         $motels[$i]['NumOfUserPick'] = getUserPick($motels[$i]['AccomIdx']);
+        $motels[$i]['GuideFromStation'] = getAccomInfo($motels[$i]['AccomIdx'])['GuideFromStation'];
 
         // 숙소당 방 개수맘큼 돈다.
         for ($j = 0; $j < $numOfRoomByAccom[$i]; $j++) {
@@ -671,8 +673,6 @@ function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
                     // 첫 번째는 그냥 할당.
                     $isFirstForPartTime = false;
                     $motels[$i]['IsPartTimeAvailable'] = $motelRoomInfo[$roomCount]['IsPartTimeAvailable'];
-                    $motels[$i]['AvailablePartTimeCheckIn'] = $motelRoomInfo[$roomCount]['AvailablePartTimeCheckIn'];
-                    $motels[$i]['AvailablePartTimeDeadline'] = $motelRoomInfo[$roomCount]['AvailablePartTimeDeadline'];
                     $motels[$i]['PartTimePrice'] = $motelRoomInfo[$roomCount]['PartTimePrice'];
                     $motels[$i]['PartTimeHour'] = $motelRoomInfo[$roomCount]['PartTimeHour'];
                 }
@@ -681,8 +681,6 @@ function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
                 else {
                     // 새로운 대실비 < 기존의 대실비 ===> 결과 배열에 할당
                     if ($motelRoomInfo[$roomCount]['PartTimePrice'] < $motels[$i]['PartTimePrice']) {
-                        $motels[$i]['AvailablePartTimeCheckIn'] = $motelRoomInfo[$roomCount]['AvailablePartTimeCheckIn'];
-                        $motels[$i]['AvailablePartTimeDeadline'] = $motelRoomInfo[$roomCount]['AvailablePartTimeDeadline'];
                         $motels[$i]['PartTimePrice'] = $motelRoomInfo[$roomCount]['PartTimePrice'];
                         $motels[$i]['PartTimeHour'] = $motelRoomInfo[$roomCount]['PartTimeHour'];
                     }
@@ -744,7 +742,7 @@ function getMotels($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
     return $motels;
 }
 
-// 해당지역의 인원 구성에 맞는 방들을 예약 현황 및 조회
+// 해당 지역의 조건에 맞는 모텔들 방 정보 가져오기
 function getMotelRoomsInfo($isMember, $startAt, $endAt, $motelGroupIdx, $adult, $child)
 {
 
