@@ -24,7 +24,7 @@ try {
                 $res->Message = "올바른 날짜를 입력하세요";
                 echo json_encode($res, JSON_NUMERIC_CHECK);
                 break;
-            }
+            }  
 
             if ($_GET['CheckOutDate'] != null) {
                 $CheckOutDate = $_GET['CheckOutDate'];
