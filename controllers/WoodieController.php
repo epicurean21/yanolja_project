@@ -94,7 +94,7 @@ try {
             $res->info['NumOfReviewReply'] = getNumOfReviewReply($accomIdx);
 
             // 주차장 가능 여부 => 당일 조회에만 적용
-            if(strtotime($_GET['startAt']) < strtotime(date('Y-m-d H:i:s')))
+            if(strtotime($_GET['startAt']) == strtotime(date('Y-m-d')))
                 $res->info['IsFullParking'] = getAccomParkingStatus($accomIdx);
 
             // 태그를 출력 => 없는 경우 빈 배열 출력
@@ -119,7 +119,7 @@ try {
         /*
          * 특정 모텔의 요금 정보 조회
          */
-        case "getMotelMoneyInfo":
+        case "getAccomMoneyInfo":
             http_response_code(200);
 
             // 1. 토큰여부로 회원/비회원 검사 => 요금/시간 차등 적용
@@ -155,7 +155,7 @@ try {
         /*
          * 특정 모텔의 판매자 정보
          */
-        case "getMotelSellerInfo":
+        case "getAccomSellerInfo":
             http_response_code(200);
 
             // 1. 토큰여부로 회원/비회원 검사 => 요금/시간 차등 적용

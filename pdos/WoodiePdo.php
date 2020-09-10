@@ -270,7 +270,7 @@ function getAccomFacilities($AccomIdx)
 
     $st = null;
     $pdo = null;
-
+    $result = array();
     for($i = 0; $i < count($res); $i++){
         $result[] = $res[$i]['FacilityName'];
     }
