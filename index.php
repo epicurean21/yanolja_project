@@ -23,8 +23,11 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     //$r->addRoute('GET', '/jwt', ['MainController', 'validateJwt']);
 
     $r->addRoute('GET', '/motel-groups', ['IndexController', 'getMotelGroupList']);
+    $r->addRoute('GET', '/hotel-groups', ['WoodieController', 'getHotelGroupList']);
     $r->addRoute('GET', '/motels', ['WoodieController', 'getMotels']);
+    $r->addRoute('GET', '/hotels', ['WoodieController', 'getHotels']);
     $r->addRoute('GET', '/motels/{accomIdx}', ['WoodieController', 'getMotelRooms']);
+    $r->addRoute('GET', '/hotels/{accomIdx}', ['WoodieController', 'getHotelRooms']);
     $r->addRoute('GET', '/accoms/rooms', ['WoodieController', 'getRoomDetail']);
     $r->addRoute('GET', '/accoms/moneyInfo', ['WoodieController', 'getAccomMoneyInfo']);
     $r->addRoute('GET', '/accoms/sellerInfo', ['WoodieController', 'getAccomSellerInfo']);
@@ -45,7 +48,7 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/around-hotels', ['MapController', 'aroundHotels']);
     $r->addRoute('GET', '/around/map', ['MapController', 'aroundMap']);
     // $r->addRoute('GET', '/motels/{AccomIdx}', ['AccomController', 'getMotelDetail']);
-    $r->addRoute('GET', '/hotels/{AccomIdx}', ['AccomController', 'getHotelDetail']);
+    //$r->addRoute('GET', '/hotels/{AccomIdx}', ['AccomController', 'getHotelDetail']);
     $r->addRoute('GET', '/reviews/{AccomIdx}', ['AccomController', 'getReviews']);
     $r->addRoute('GET', '/reviews/{AccomIdx}/photos', ['AccomController', 'getPhotoReviews']);
 
@@ -53,6 +56,11 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/reserve-a', ['ReservationController', 'reserveA']);
     $r->addRoute('POST', '/reserve-p/order', ['ReservationController', 'orderP']);
     $r->addRoute('POST', '/reserve-a/order', ['ReservationController', 'orderA']);
+
+//    $r->addRoute('GET', '/search', ['AccomController', 'search']);
+
+    $r->addRoute('POST', '/write-reviews', ['AccomController', 'postReviews']);
+    $r->addRoute('GET', '/write-reviews', ['AccomController', 'postNewReviews']);
 
 //    $r->addRoute('GET', '/users', 'get_all_users_handler');
 //    // {id} must be a number (\d+)

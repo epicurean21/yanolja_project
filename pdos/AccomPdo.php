@@ -1180,7 +1180,223 @@ WHERE AccomIdx = ?";
     return $res;
 }
 
+function postUserSearchHistory($UserIdx, $CheckInDate, $CheckOutDate, $NumOfAdult, $NumOfChild, $Keyword) {
+    $pdo = pdoSqlConnect();
+    $query = "INSERT INTO SearchHistory (UserIdx, CheckInDate, CheckOutDate, NumOfAdult, NumOfChild, Keyword) 
+VALUES (?, ?,?,?,?,?);";
 
+    $st = $pdo->prepare($query);
+    $st->execute([$UserIdx, $CheckInDate, $CheckOutDate, $NumOfAdult, $NumOfChild, $Keyword]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+
+    $st = null;
+    $pdo = null;
+}
+
+function isSearchRegionExists($Keyword) {
+    $pdo = pdoSqlConnect();
+    $query = "SELECT EXISTS(
+	SELECT *
+    FROM Region
+    WHERE RegionName like  concat('%', ?, '%')) as exist;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$Keyword]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+    return $res[0]['exist'];
+}
+
+function isSearchAccomExists($Keyword) {
+    $pdo = pdoSqlConnect();
+    $query = "SELECT EXISTS(
+	Select * 
+FROM Accommodation
+WHERE Accommodation.AccomName Like concat('%', ?, '%')) as exist;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$Keyword]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+    return $res[0]['exist'];
+}
+
+function getSearchRegionIdx($Keyword) {
+    $pdo = pdoSqlConnect();
+    echo $Keyword;
+    $query = "SELECT RegionIdx
+    FROM Region
+    WHERE RegionName like  concat('%', ?, '%') as RegionIdx;";
+    $st = $pdo->prepare($query);
+    $st->execute([$Keyword]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+    return $res[0]['RegionIdx'];
+}
+
+function getSearchAccomIdx($Keyword) {
+    $pdo = pdoSqlConnect();
+    $query = "Select Accommodation.AccomIdx
+FROM Accommodation
+WHERE Accommodation.AccomName Like concat('%', ?, '%');";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$Keyword]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+    return $res[0]['AccomIdx'];
+}
+
+
+function getMotelCount() {
+    $pdo = pdoSqlConnect();
+    $query = "Select count(Accommodation.AccomIdx) as cnt
+FROM Accommodation
+WHERE Accommodation.AccomType = 'M' 
+AND Accommodation.IsDeleted = 'N';";
+
+    $st = $pdo->prepare($query);
+    $st->execute();
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+    return $res[0]['cnt'];
+}
+function getHotelGroupIdx($RegionIdx) {
+    $pdo = pdoSqlConnect();
+    $query = "Select HotelGroupIdx
+FROM HotelGroup
+WHERE HotelGroup.RegionIdx = ?
+AND HotelGroup.IsDeleted = 'N';";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$RegionIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+    return $res[0]['HotelGroupIdx'];
+}
+function getMotelGroupIdx($RegionIdx) {
+    $pdo = pdoSqlConnect();
+    $query = "Select MotelGroupIdx
+FROM MotelGroup
+WHERE MotelGroup.RegionIdx = ?
+AND MotelGroup.IsDeleted = 'N';";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$RegionIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+    return $res[0]['MotelGroupIdx'];
+}
+
+
+function isValidReserveIdx($ReserveIdx, $UserIdx) {
+    $pdo = pdoSqlConnect();
+    $query = "select exists (select * from Reservation Where ReserveIdx = ?
+ AND UserIdx = ?) as exist;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$ReserveIdx, $UserIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res[0]['exist'];
+}
+
+
+function getReserveInfo($ReserveIdx) {
+    $pdo = pdoSqlConnect();
+    $query = "SELECT Reservation.AccomIdx, Room.RoomIdx, ReserveType, Accommodation.AccomName, Room.RoomName
+FROM Reservation join (Accommodation join Room using (AccomIdx)) using (AccomIdx)
+WHERE ReserveIdx = ?
+AND Reservation.RoomIdx = Room.RoomIdx;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$ReserveIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
+
+function addNewReview($AccomIdx, $UserIdx, $ReviewContent, $IsPhotoReview,
+                      $OverallRating, $KindnessRating, $CleanlinessRating,
+                      $ConvenienceRating, $LocationRating) {
+    $pdo = pdoSqlConnect();
+
+    $query = "INSERT INTO AccommodationReview (AccomIdx, UserIdx, ReviewContent, IsPhotoReview, OverallRating, KindnessRating, CleanlinessRating
+, ConvenienceRating, LocationRating) 
+VALUES (?, ?, ?, ? ,? ,? ,? ,? ,?);";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx, $UserIdx, $ReviewContent, $IsPhotoReview,
+        $OverallRating, $KindnessRating, $CleanlinessRating,
+        $ConvenienceRating, $LocationRating]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+
+    $st = null;
+    $pdo = null;
+}
+
+function getReviewIdx($AccomIdx, $UserIdx) {
+    $pdo = pdoSqlConnect();
+    $query = "SELECT ReviewIdx 
+FROM AccommodationReview
+WHERE AccomIdx = ? AND UserIdx = ?
+ORDER BY AccommodationReview.CreatedAt DESC
+LIMIT 1;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx, $UserIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res[0]['ReviewIdx'];
+}
+
+function addNewReviewPhotos($ReviewIdx, $PhotoUrl, $PhotoCnt) {
+    $pdo = pdoSqlConnect();
+    for($i = 0; $i < $PhotoCnt; $i++) {
+        $query = "INSERT INTO ReviewPhoto (ReviewIdx, PhotoUrl) 
+VALUES (?, ?)";
+        $st = $pdo->prepare($query);
+        $st->execute([$ReviewIdx, $PhotoUrl[$i]]);
+        $st->setFetchMode(PDO::FETCH_ASSOC);
+    }
+
+    $st = null;
+    $pdo = null;
+}
 
 /*여기부턴 현재 베타
 function searchMotelByArea($RegionIdx, $startDate, $endDate, $peopleNum)

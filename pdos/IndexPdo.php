@@ -1,17 +1,6 @@
 <?php
 
-//CHECK
-function keyCheck($key, $arr)
-{
-    if (!array_key_exists($key, $arr)) {
-        $res = (object)array();
-        $res->isSuccess = false;
-        $res->code = 350;
-        $res->message = $key . ' 전달 없음';
-        echo json_encode($res, JSON_NUMERIC_CHECK);
-        exit;
-    }
-}
+
 function parsingDate($date)
 {
 

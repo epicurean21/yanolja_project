@@ -520,7 +520,6 @@ function isCouponExists($CouponIdx, $ReserveType) {
     return $res[0]['exist'];
 }
 
-
 function checkAllday($pdo, $AccomIdx, $RoomIdx, $startAt, $dayDiff){
 
     // 9 ~ 12 연박 가정하면

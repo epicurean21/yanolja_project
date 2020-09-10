@@ -1,3 +1,2 @@
-logs/access.log
-logs/errors.log
+logs/
 DatabasePdo.php

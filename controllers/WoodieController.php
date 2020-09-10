@@ -21,8 +21,23 @@ try {
             break;
 
 
+
         /*
-         * 1. 지역별 모든 모텔 조회
+         * 호텔 지역그룹 리스트 조회
+         */
+        case "getHotelGroupList":
+            http_response_code(200);
+            $res->result = getHotelGroupList();
+            $res->isSuccess = TRUE;
+            $res->code = 200;
+            $res->message = "호텔 도시-지역 불러오기 성공";
+            echo json_encode($res, JSON_NUMERIC_CHECK);
+            break;
+
+
+
+        /*
+         * 지역별 모든 모텔 조회
          */
         case "getMotels":
             http_response_code(200);
@@ -34,8 +49,9 @@ try {
                 $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
 
                 if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    http_response_code(400);
                     $res->isSuccess = FALSE;
-                    $res->code = 201;
+                    $res->code = 400;
                     $res->message = "유효하지 않은 토큰입니다";
                     echo json_encode($res, JSON_NUMERIC_CHECK);
                     addErrorLogs($errorLogs, $res, $req);
@@ -48,10 +64,84 @@ try {
                 $isMember = false;
             }
 
-            $res->result = getMotels($isMember, $_GET['startAt'], $_GET['endAt'], $_GET['motelGroupIdx'], $_GET['adult'], $_GET['child']);
+            // 필수키체크
+            keyCheck('startAt', $_GET);
+            keyCheck('endAt', $_GET);
+            keyCheck('motelGroupIdx', $_GET);
+            keyCheck('adult', $_GET);
+            keyCheck('child', $_GET);
+
+
+            // 유효성검사
+            if(!isValidMotelGroupIdx($_GET['motelGroupIdx'])){
+                http_response_code(404);
+                $res->isSuccess = FALSE;
+                $res->code = 404 ;
+                $res->message = "유효하지 않은 모텔그룹id입니다.";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                addErrorLogs($errorLogs, $res, $req);
+                return;
+            }
+
             $res->isSuccess = TRUE;
             $res->code = 200;
             $res->message = "지역 모텔 불러오기 성공";
+            $res->result = getMotels($isMember, $_GET['startAt'], $_GET['endAt'], $_GET['motelGroupIdx'], $_GET['adult'], $_GET['child']);
+            echo json_encode($res, JSON_NUMERIC_CHECK);
+            break;
+
+
+
+        /*
+         * 지역별 모든 모텔 조회
+         */
+        case "getHotels":
+            http_response_code(200);
+
+            // 1. 토큰여부로 회원/비회원 검사 => 요금/시간 차등 적용
+            if (array_key_exists('HTTP_X_ACCESS_TOKEN', $_SERVER)){
+
+                // 1-1. 토큰있으면, 유효성 검사
+                $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
+
+                if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    http_response_code(400);
+                    $res->isSuccess = FALSE;
+                    $res->code = 400 ;
+                    $res->message = "유효하지 않은 토큰입니다";
+                    echo json_encode($res, JSON_NUMERIC_CHECK);
+                    addErrorLogs($errorLogs, $res, $req);
+                    return;
+                }
+                $isMember = true;
+            }
+            else {
+                // 2. 토큰 없으면 비회원
+                $isMember = false;
+            }
+
+            // 필수키체크
+            keyCheck('startAt', $_GET);
+            keyCheck('endAt', $_GET);
+            keyCheck('hotelGroupIdx', $_GET);
+            keyCheck('adult', $_GET);
+            keyCheck('child', $_GET);
+
+            // 유효성 검사
+            if(!isValidHotelGroupIdx($_GET['hotelGroupIdx'])){
+                http_response_code(404);
+                $res->isSuccess = FALSE;
+                $res->code = 404 ;
+                $res->message = "유효하지 않은 hotelGroupIdx 입니다.";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                addErrorLogs($errorLogs, $res, $req);
+                return;
+            }
+
+            $res->isSuccess = TRUE;
+            $res->code = 200;
+            $res->message = "지역 모텔 불러오기 성공";
+            $res->result = getHotels($isMember, $_GET['startAt'], $_GET['endAt'], $_GET['hotelGroupIdx'], $_GET['adult'], $_GET['child']);
             echo json_encode($res, JSON_NUMERIC_CHECK);
             break;
 
@@ -69,8 +159,9 @@ try {
                 $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
 
                 if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    http_response_code(400);
                     $res->isSuccess = FALSE;
-                    $res->code = 201;
+                    $res->code = 400 ;
                     $res->message = "유효하지 않은 토큰입니다";
                     echo json_encode($res, JSON_NUMERIC_CHECK);
                     addErrorLogs($errorLogs, $res, $req);
@@ -81,6 +172,36 @@ try {
             else {
                 // 2. 토큰 없으면 비회원
                 $isMember = false;
+            }
+
+
+            // 필수키체크
+            keyCheck('startAt', $_GET);
+            keyCheck('endAt', $_GET);
+            keyCheck('motelGroupIdx', $_GET);
+            keyCheck('adult', $_GET);
+            keyCheck('child', $_GET);
+
+            // 유효성검사
+            if(!isValidMotelGroupIdx($_GET['motelGroupIdx'])){
+                http_response_code(404);
+                $res->isSuccess = FALSE;
+                $res->code = 404 ;
+                $res->message = "유효하지 않은 모텔그룹id입니다.";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                addErrorLogs($errorLogs, $res, $req);
+                return;
+            }
+
+            // AccomIdx 유효성 검사
+            if(!isValidAccomIdx($vars["accomIdx"])){
+                http_response_code(404);
+                $res->isSuccess = FALSE;
+                $res->code = 404 ;
+                $res->message = "유효하지 않은 accomIdx입니다";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                addErrorLogs($errorLogs, $res, $req);
+                return;
             }
 
             // PathVariable 할당한다.
@@ -118,9 +239,9 @@ try {
 
 
         /*
-         *  특정 모텔 특정 객실 조회
+         * 특정 호텔의 객실 조회
          */
-        case "getRoomDetail":
+        case "getHotelRooms":
             http_response_code(200);
 
             // 1. 토큰여부로 회원/비회원 검사 => 요금/시간 차등 적용
@@ -130,8 +251,9 @@ try {
                 $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
 
                 if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    http_response_code(400);
                     $res->isSuccess = FALSE;
-                    $res->code = 201;
+                    $res->code = 400 ;
                     $res->message = "유효하지 않은 토큰입니다";
                     echo json_encode($res, JSON_NUMERIC_CHECK);
                     addErrorLogs($errorLogs, $res, $req);
@@ -144,10 +266,125 @@ try {
                 $isMember = false;
             }
 
+            // 필수키체크
+            keyCheck('startAt', $_GET);
+            keyCheck('endAt', $_GET);
+            keyCheck('hotelGroupIdx', $_GET);
+            keyCheck('adult', $_GET);
+            keyCheck('child', $_GET);
+
+            // 유효성 검사
+            if(!isValidHotelGroupIdx($_GET['hotelGroupIdx'])){
+                http_response_code(404);
+                $res->isSuccess = FALSE;
+                $res->code = 404 ;
+                $res->message = "유효하지 않은 hotelGroupIdx 입니다.";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                addErrorLogs($errorLogs, $res, $req);
+                return;
+            }
+
+            // AccomIdx 유효성 검사
+            if(!isValidAccomIdx($vars["accomIdx"])){
+                http_response_code(404);
+                $res->isSuccess = FALSE;
+                $res->code = 404 ;
+                $res->message = "유효하지 않은 accomIdx입니다";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                addErrorLogs($errorLogs, $res, $req);
+                return;
+            }
+
+            // PathVariable 할당한다.
+            $accomIdx = $vars["accomIdx"];
+
             $res->isSuccess = TRUE;
             $res->code = 200;
-            $res->message = "특정 숙소 특정 객실 조회 ";
-            $res->result = getRoomDetail($isMember, $_GET['$startAt'], $_GET['$endAt'], $_GET['$adult'], $_GET['$child'], $_GET['accomIdx'], $_GET['roomIdx']);
+            $res->message = "특정 호텔의 모든 방 불러오기 성공";
+            $res->info = getAccomInfo($accomIdx);
+            $res->info['Contact'] = getAccomContact($accomIdx);
+            $res->info['NumOfReviewReply'] = getNumOfReviewReply($accomIdx);
+
+            // 태그를 출력 => 없는 경우 빈 배열 출력
+            $accomTag = getAccomTag($accomIdx);
+            if(empty($accomTag)){
+                $res->info['AccomTag'] = array();
+            }
+            else{
+                $res->info['AccomTag'] = $accomTag;
+            }
+
+            $res->facility = getAccomFacilities($accomIdx);
+
+            $res->photo = getAccomPhotos($accomIdx);
+            $res->ReviewPreview = getAccomReviewWithReply($accomIdx);
+            $res->result = getHotelRoomsInfo($isMember, $_GET['startAt'], $_GET['endAt'], $_GET['adult'], $_GET['child'], $_GET['hotelGroupIdx'], $accomIdx);
+
+            echo json_encode($res, JSON_NUMERIC_CHECK);
+            break;
+
+
+        /*
+         *  특정 모텔 특정 객실 조회
+         */
+        case "getRoomDetail":
+            http_response_code(200);
+
+            // 1. 토큰여부로 회원/비회원 검사 => 요금/시간 차등 적용
+            if (array_key_exists('HTTP_X_ACCESS_TOKEN', $_SERVER)){
+
+                // 1-1. 토큰있으면, 유효성 검사
+                $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
+
+                if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    http_response_code(400);
+                    $res->isSuccess = FALSE;
+                    $res->code = 400 ;
+                    $res->message = "유효하지 않은 토큰입니다";
+                    echo json_encode($res, JSON_NUMERIC_CHECK);
+                    addErrorLogs($errorLogs, $res, $req);
+                    return;
+                }
+                $isMember = true;
+            }
+            else {
+                // 2. 토큰 없으면 비회원
+                $isMember = false;
+            }
+
+            // 필수키체크
+            keyCheck('startAt', $_GET);
+            keyCheck('endAt', $_GET);
+            keyCheck('accomIdx', $_GET);
+            keyCheck('roomIdx', $_GET);
+
+            // AccomIdx 유효성 검사
+            if(!isValidAccomIdx($_GET['accomIdx'])){
+                http_response_code(404);
+                $res->isSuccess = FALSE;
+                $res->code = 404;
+                $res->message = "유효하지 않은 accomIdx입니다";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                addErrorLogs($errorLogs, $res, $req);
+                return;
+            }
+
+
+            // AccomIdx 유효성 검사
+            if(!isValidRoomIdx($_GET['accomIdx'], $_GET['roomIdx'])){
+                http_response_code(404);
+                $res->isSuccess = FALSE;
+                $res->code = 404;
+                $res->message = "유효하지 않은 roomIdx입니다";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                addErrorLogs($errorLogs, $res, $req);
+                return;
+            }
+
+            $res->isSuccess = TRUE;
+            $res->code = 200;
+            $res->message = "특정 숙소 특정 객실 조회 성공";
+            $res->result = getRoomDetail($isMember, $_GET['startAt'], $_GET['endAt'], $_GET['accomIdx'], $_GET['roomIdx']);
             echo json_encode($res, JSON_NUMERIC_CHECK);
             break;
 
@@ -165,8 +402,9 @@ try {
                 $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
 
                 if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    http_response_code(400);
                     $res->isSuccess = FALSE;
-                    $res->code = 201;
+                    $res->code = 400 ;
                     $res->message = "유효하지 않은 토큰입니다";
                     echo json_encode($res, JSON_NUMERIC_CHECK);
                     addErrorLogs($errorLogs, $res, $req);
@@ -179,10 +417,25 @@ try {
                 $isMember = false;
             }
 
+            // 필수 키 체크
+            keyCheck('accomIdx', $_GET);
+
+            // AccomIdx 유효성 검사
+            if(!isValidAccomIdx($_GET['accomIdx'])){
+                http_response_code(404);
+                $res->isSuccess = FALSE;
+                $res->code = 404;
+                $res->message = "유효하지 않은 accomIdx입니다";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                addErrorLogs($errorLogs, $res, $req);
+                return;
+            }
+
             // 모텔만 요금정보 탭이 있음
             if(getTypeOfAccom($_GET['accomIdx']) != 'M'){
+                http_response_code(404);
                 $res->isSuccess = false;
-                $res->code = 300;
+                $res->code = 404;
                 $res->message = "모텔만이 요금정보를 가지고 있습니다. 숙소인덱스가 잘못되었습니다.";
                 $res->result = '';
                 echo json_encode($res, JSON_NUMERIC_CHECK);
@@ -211,8 +464,9 @@ try {
                 $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
 
                 if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    http_response_code(400);
                     $res->isSuccess = FALSE;
-                    $res->code = 201;
+                    $res->code = 400;
                     $res->message = "유효하지 않은 토큰입니다";
                     echo json_encode($res, JSON_NUMERIC_CHECK);
                     addErrorLogs($errorLogs, $res, $req);
@@ -223,6 +477,20 @@ try {
             else {
                 // 2. 토큰 없으면 비회원
                 $isMember = false;
+            }
+
+            // 필수 키 체크
+            keyCheck('accomIdx', $_GET);
+
+            // AccomIdx 유효성 검사
+            if(!isValidAccomIdx($_GET['accomIdx'])){
+                http_response_code(404);
+                $res->isSuccess = FALSE;
+                $res->code = 404;
+                $res->message = "유효하지 않은 accomIdx입니다";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                addErrorLogs($errorLogs, $res, $req);
+                return;
             }
 
             $res->isSuccess = TRUE;
@@ -246,8 +514,9 @@ try {
                 $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
 
                 if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    http_response_code(400);
                     $res->isSuccess = FALSE;
-                    $res->code = 201;
+                    $res->code = 400;
                     $res->message = "유효하지 않은 토큰입니다";
                     echo json_encode($res, JSON_NUMERIC_CHECK);
                     addErrorLogs($errorLogs, $res, $req);
