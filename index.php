@@ -4,7 +4,7 @@ require './pdos/IndexPdo.php';
 require './pdos/WoodiePdo.php';
 require './pdos/MapPdo.php';
 require './pdos/AccomPdo.php';
-
+require './pdos/ReservationPdo.php';
 require './vendor/autoload.php';
 
 use \Monolog\Logger as Logger;
@@ -15,21 +15,20 @@ ini_set('default$Longtitude_charset', 'utf8mb4');
 
 //에러출력하게 하는 코드
 //error_reporting(E_ALL); ini_set("display_errors", 1);
-//tmp
+
 //Main Server API
 $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) {
     /* ******************   Test   ****************** */
     // 유효성 검사는 요청 마다 함으로 굳이 필요없음
     //$r->addRoute('GET', '/jwt', ['MainController', 'validateJwt']);
-    $r->addRoute('GET', '/', ['IndexController', 'index']);
-    $r->addRoute('GET', '/test', ['IndexController', 'test']);
-    $r->addRoute('GET', '/test/{testNo}', ['IndexController', 'testDetail']);
-    $r->addRoute('POST', '/test', ['IndexController', 'testPost']);
 
-    $r->addRoute('POST', '/jwt', ['MainController', 'createJwt']);
-    $r->addRoute('GET', '/motels', ['WoodieController', 'getMotels']);
     $r->addRoute('GET', '/motel-groups', ['IndexController', 'getMotelGroupList']);
+    $r->addRoute('GET', '/motels', ['WoodieController', 'getMotels']);
+    $r->addRoute('GET', '/motels/{accomIdx}', ['WoodieController', 'getMotelRooms']);
+    $r->addRoute('GET', '/motels/moneyInfo', ['WoodieController', 'getMotelMoneyInfo']);
+    $r->addRoute('GET', '/motels/sellerInfo', ['WoodieController', 'getMotelSellerInfo']);
     $r->addRoute('GET', '/areas', ['WoodieController', 'getAreas']);
+    $r->addRoute('POST', '/jwt', ['MainController', 'createJwt']);
     $r->addRoute('POST', '/users', ['IndexController', 'createUser']);
 
 
@@ -44,14 +43,15 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/around-motels', ['MapController', 'aroundMotels']);
     $r->addRoute('GET', '/around-hotels', ['MapController', 'aroundHotels']);
     $r->addRoute('GET', '/around/map', ['MapController', 'aroundMap']);
-    $r->addRoute('GET', '/motels/{AccomIdx}', ['AccomController', 'getMotelDetail']);
+    // $r->addRoute('GET', '/motels/{AccomIdx}', ['AccomController', 'getMotelDetail']);
     $r->addRoute('GET', '/hotels/{AccomIdx}', ['AccomController', 'getHotelDetail']);
     $r->addRoute('GET', '/reviews/{AccomIdx}', ['AccomController', 'getReviews']);
     $r->addRoute('GET', '/reviews/{AccomIdx}/photos', ['AccomController', 'getPhotoReviews']);
 
     $r->addRoute('GET', '/reserve-p', ['ReservationController', 'reserveP']);
     $r->addRoute('GET', '/reserve-a', ['ReservationController', 'reserveA']);
-    $r->addRoute('POST', '/reserve-p/order', ['IndexController', 'orderP']);
+    $r->addRoute('POST', '/reserve-p/order', ['ReservationController', 'orderP']);
+    $r->addRoute('POST', '/reserve-a/order', ['ReservationController', 'orderA']);
 
 //    $r->addRoute('GET', '/users', 'get_all_users_handler');
 //    // {id} must be a number (\d+)
