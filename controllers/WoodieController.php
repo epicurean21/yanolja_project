@@ -109,9 +109,45 @@ try {
             $res->facility = getAccomFacilities($accomIdx);
 
             $res->photo = getAccomPhotos($accomIdx);
+            $res->ReviewPreview = getAccomReviewWithReply($accomIdx);
             $res->result = getMotelRoomsInfo($isMember, $_GET['startAt'], $_GET['endAt'], $_GET['adult'], $_GET['child'], $_GET['motelGroupIdx'], $accomIdx);
 
 
+            echo json_encode($res, JSON_NUMERIC_CHECK);
+            break;
+
+
+        /*
+         *  특정 모텔 특정 객실 조회
+         */
+        case "getRoomDetail":
+            http_response_code(200);
+
+            // 1. 토큰여부로 회원/비회원 검사 => 요금/시간 차등 적용
+            if (array_key_exists('HTTP_X_ACCESS_TOKEN', $_SERVER)){
+
+                // 1-1. 토큰있으면, 유효성 검사
+                $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
+
+                if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    $res->isSuccess = FALSE;
+                    $res->code = 201;
+                    $res->message = "유효하지 않은 토큰입니다";
+                    echo json_encode($res, JSON_NUMERIC_CHECK);
+                    addErrorLogs($errorLogs, $res, $req);
+                    return;
+                }
+                $isMember = true;
+            }
+            else {
+                // 2. 토큰 없으면 비회원
+                $isMember = false;
+            }
+
+            $res->isSuccess = TRUE;
+            $res->code = 200;
+            $res->message = "특정 숙소 특정 객실 조회 ";
+            $res->result = getRoomDetail($isMember, $_GET['$startAt'], $_GET['$endAt'], $_GET['$adult'], $_GET['$child'], $_GET['accomIdx'], $_GET['roomIdx']);
             echo json_encode($res, JSON_NUMERIC_CHECK);
             break;
 
@@ -141,6 +177,16 @@ try {
             else {
                 // 2. 토큰 없으면 비회원
                 $isMember = false;
+            }
+
+            // 모텔만 요금정보 탭이 있음
+            if(getTypeOfAccom($_GET['accomIdx']) != 'M'){
+                $res->isSuccess = false;
+                $res->code = 300;
+                $res->message = "모텔만이 요금정보를 가지고 있습니다. 숙소인덱스가 잘못되었습니다.";
+                $res->result = '';
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                return;
             }
 
             $res->isSuccess = TRUE;
@@ -182,10 +228,14 @@ try {
             $res->isSuccess = TRUE;
             $res->code = 200;
             $res->message = "판매자 정보 불러오기 성공";
-            $res->result = getMotelSellerInfo($_GET['accomIdx']);
+            $res->result = getAccomSellerInfo($_GET['accomIdx']);
             echo json_encode($res, JSON_NUMERIC_CHECK);
             break;
 
+
+        /*
+         * 하단 네비게이션 바 지역별 버튼 클릭시 지역별 그룹리스트 출력
+         */
         case "getAreas":
             http_response_code(200);
 

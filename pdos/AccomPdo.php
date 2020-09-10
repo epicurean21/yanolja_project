@@ -101,6 +101,106 @@ WHERE
     return $res;
 }
 
+function getBestReviews($AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "SELECT 
+    BR.UserIdx,
+    BR.ReviewIdx,
+    UR.UserName,
+    RoomName,
+    UR.ReserveType,
+    BR.ReviewContent,
+    BR.OverallRating,
+	CASE
+		WHEN
+			(timestampdiff(second, BR.CreatedAt, now()) < 60)
+		THEN
+			concat(timestampdiff(second, BR.CreatedAt, now()), '초 전')
+		ELSE
+			CASE
+				WHEN
+					(timestampdiff(minute, BR.CreatedAt, now()) < 60)
+				THEN
+					concat(timestampdiff(minute, BR.CreatedAt, now()), '분 전')
+				ELSE
+					CASE
+						WHEN
+							(timestampdiff(hour, BR.CreatedAt, now()) < 24)
+						THEN
+							concat(timestampdiff(hour, BR.CreatedAt, now()), '시간 전')
+						ELSE
+							CASE
+								WHEN
+									(timestampdiff(day, BR.CreatedAt, now()) < 8)
+								THEN
+									concat(timestampdiff(day, BR.CreatedAt, now()), '일 전')
+								ELSE
+									BR.CreatedAt
+							END
+					END
+			END
+	END as WrittenTime,
+    CASE
+        WHEN
+            BR.IsPhotoReview = 'Y'
+        THEN
+            (SELECT 
+                    GROUP_CONCAT(PhotoUrl)
+                FROM
+                    ReviewPhoto
+                WHERE
+                    ReviewPhoto.ReviewIdx = BR.ReviewIdx
+                GROUP BY ReviewIdx)
+    END AS ReviewPhoto,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = BR.ReviewIdx)) = 1
+		THEN
+			(SELECT ReplyText
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = BR.ReviewIdx
+            AND ReviewReply.IsDeleted = 'N')
+	END as ReviewReply,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = BR.ReviewIdx)) = 1
+		THEN
+			(SELECT CreatedAt
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = BR.ReviewIdx
+            AND ReviewReply.IsDeleted = 'N')
+	END as ReplyWrittenTime
+FROM
+    (select AccommodationReview.AccomIdx, AccommodationReview.ReviewIdx,AccommodationReview.UserIdx,AccommodationReview.ReviewContent
+ ,AccommodationReview.IsPhotoReview, AccommodationReview.OverallRating, AccommodationReview.KindnessRating, AccommodationReview.CleanlinessRating,
+ AccommodationReview.ConvenienceRating, AccommodationReview.LocationRating, AccommodationReview.CreatedAt, AccommodationReview.UpdatedAt, AccommodationReview.isDeleted
+ from (AccommodationReview join BestReview 
+ON (AccommodationReview.AccomIdx = BestReview.AccomIdx and AccommodationReview.ReviewIdx = BestReview.ReviewIdx))) BR 
+    JOIN
+    (SELECT 
+        UserIdx, UserName, Reservation.AccomIdx, RoomName, ReserveType, ReserveIdx
+    FROM
+        User
+			JOIN (Reservation JOIN Room On (Reservation.AccomIdx = Room.AccomIdx and Reservation.RoomIdx = Room.RoomIdx))
+		USING (UserIdx)) UR ON (UR.UserIdx = BR.UserIdx
+        AND UR.AccomIdx = BR.AccomIdx)
+WHERE
+    BR.AccomIdx = ?     AND BR.IsDeleted = 'N'
+ORDER BY CreatedAt DESC
+LIMIT 2;";
+
+    $st = $pdo->prepare($query);
+    //    $st->execute([$param,$param]);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
 
 function getReviewsNewOrder($AccomIdx)
 {
@@ -112,7 +212,35 @@ function getReviewsNewOrder($AccomIdx)
     UR.ReserveType,
     AccommodationReview.ReviewContent,
     AccommodationReview.OverallRating,
-    AccommodationReview.CreatedAt,
+	CASE
+		WHEN
+			(timestampdiff(second, AccommodationReview.CreatedAt, now()) < 60)
+		THEN
+			concat(timestampdiff(second, AccommodationReview.CreatedAt, now()), '초 전')
+		ELSE
+			CASE
+				WHEN
+					(timestampdiff(minute, AccommodationReview.CreatedAt, now()) < 60)
+				THEN
+					concat(timestampdiff(minute, AccommodationReview.CreatedAt, now()), '분 전')
+				ELSE
+					CASE
+						WHEN
+							(timestampdiff(hour, AccommodationReview.CreatedAt, now()) < 24)
+						THEN
+							concat(timestampdiff(hour, AccommodationReview.CreatedAt, now()), '시간 전')
+						ELSE
+							CASE
+								WHEN
+									(timestampdiff(day, AccommodationReview.CreatedAt, now()) < 8)
+								THEN
+									concat(timestampdiff(day, AccommodationReview.CreatedAt, now()), '일 전')
+								ELSE
+									AccommodationReview.CreatedAt
+							END
+					END
+			END
+		END as WrittenTime,
     CASE
         WHEN
             AccommodationReview.IsPhotoReview = 'Y'
@@ -132,7 +260,16 @@ function getReviewsNewOrder($AccomIdx)
 			(SELECT ReplyText
 				FROM ReviewReply
 			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
-	END as ReviewReply
+	END as ReviewReply,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT CreatedAt
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx
+            AND ReviewReply.IsDeleted = 'N')
+	END as ReplyWrittenTime
 FROM
     AccommodationReview
         JOIN
@@ -167,7 +304,35 @@ function getReviewsRatingHigh($AccomIdx)
     UR.ReserveType,
     AccommodationReview.ReviewContent,
     AccommodationReview.OverallRating,
-    AccommodationReview.CreatedAt,
+	CASE
+		WHEN
+			(timestampdiff(second, AccommodationReview.CreatedAt, now()) < 60)
+		THEN
+			concat(timestampdiff(second, AccommodationReview.CreatedAt, now()), '초 전')
+		ELSE
+			CASE
+				WHEN
+					(timestampdiff(minute, AccommodationReview.CreatedAt, now()) < 60)
+				THEN
+					concat(timestampdiff(minute, AccommodationReview.CreatedAt, now()), '분 전')
+				ELSE
+					CASE
+						WHEN
+							(timestampdiff(hour, AccommodationReview.CreatedAt, now()) < 24)
+						THEN
+							concat(timestampdiff(hour, AccommodationReview.CreatedAt, now()), '시간 전')
+						ELSE
+							CASE
+								WHEN
+									(timestampdiff(day, AccommodationReview.CreatedAt, now()) < 8)
+								THEN
+									concat(timestampdiff(day, AccommodationReview.CreatedAt, now()), '일 전')
+								ELSE
+									AccommodationReview.CreatedAt
+							END
+					END
+			END
+		END as WrittenTime,
     CASE
         WHEN
             AccommodationReview.IsPhotoReview = 'Y'
@@ -187,7 +352,16 @@ function getReviewsRatingHigh($AccomIdx)
 			(SELECT ReplyText
 				FROM ReviewReply
 			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
-	END as ReviewReply
+	END as ReviewReply,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT CreatedAt
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx
+            AND ReviewReply.IsDeleted = 'N')
+	END as ReplyWrittenTime
 FROM
     AccommodationReview
         JOIN
@@ -198,7 +372,7 @@ FROM
     JOIN Reservation USING (UserIdx)) UR ON (UR.UserIdx = AccommodationReview.UserIdx
         AND UR.AccomIdx = AccommodationReview.AccomIdx)
 WHERE
-    AccommodationReview.AccomIdx = ?    AND AccommodationReview.IsDeleted = 'N'
+    AccommodationReview.AccomIdx = ?     AND AccommodationReview.IsDeleted = 'N'
 ORDER BY OverallRating DESC;";
 
     $st = $pdo->prepare($query);
@@ -222,7 +396,35 @@ function getReviewsRatingLow($AccomIdx)
     UR.ReserveType,
     AccommodationReview.ReviewContent,
     AccommodationReview.OverallRating,
-    AccommodationReview.CreatedAt,
+	CASE
+		WHEN
+			(timestampdiff(second, AccommodationReview.CreatedAt, now()) < 60)
+		THEN
+			concat(timestampdiff(second, AccommodationReview.CreatedAt, now()), '초 전')
+		ELSE
+			CASE
+				WHEN
+					(timestampdiff(minute, AccommodationReview.CreatedAt, now()) < 60)
+				THEN
+					concat(timestampdiff(minute, AccommodationReview.CreatedAt, now()), '분 전')
+				ELSE
+					CASE
+						WHEN
+							(timestampdiff(hour, AccommodationReview.CreatedAt, now()) < 24)
+						THEN
+							concat(timestampdiff(hour, AccommodationReview.CreatedAt, now()), '시간 전')
+						ELSE
+							CASE
+								WHEN
+									(timestampdiff(day, AccommodationReview.CreatedAt, now()) < 8)
+								THEN
+									concat(timestampdiff(day, AccommodationReview.CreatedAt, now()), '일 전')
+								ELSE
+									AccommodationReview.CreatedAt
+							END
+					END
+			END
+		END as WrittenTime,
     CASE
         WHEN
             AccommodationReview.IsPhotoReview = 'Y'
@@ -242,7 +444,16 @@ function getReviewsRatingLow($AccomIdx)
 			(SELECT ReplyText
 				FROM ReviewReply
 			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
-	END as ReviewReply
+	END as ReviewReply,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT CreatedAt
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx
+            AND ReviewReply.IsDeleted = 'N')
+	END as ReplyWrittenTime
 FROM
     AccommodationReview
         JOIN
@@ -253,7 +464,7 @@ FROM
     JOIN Reservation USING (UserIdx)) UR ON (UR.UserIdx = AccommodationReview.UserIdx
         AND UR.AccomIdx = AccommodationReview.AccomIdx)
 WHERE
-    AccommodationReview.AccomIdx = ?    AND AccommodationReview.IsDeleted = 'N'
+    AccommodationReview.AccomIdx = ?     AND AccommodationReview.IsDeleted = 'N'
 ORDER BY OverallRating;";
 
     $st = $pdo->prepare($query);
@@ -278,7 +489,35 @@ function getPhotoReviewsNewOrder($AccomIdx)
     UR.ReserveType,
     AccommodationReview.ReviewContent,
     AccommodationReview.OverallRating,
-    AccommodationReview.CreatedAt,
+	CASE
+		WHEN
+			(timestampdiff(second, AccommodationReview.CreatedAt, now()) < 60)
+		THEN
+			concat(timestampdiff(second, AccommodationReview.CreatedAt, now()), '초 전')
+		ELSE
+			CASE
+				WHEN
+					(timestampdiff(minute, AccommodationReview.CreatedAt, now()) < 60)
+				THEN
+					concat(timestampdiff(minute, AccommodationReview.CreatedAt, now()), '분 전')
+				ELSE
+					CASE
+						WHEN
+							(timestampdiff(hour, AccommodationReview.CreatedAt, now()) < 24)
+						THEN
+							concat(timestampdiff(hour, AccommodationReview.CreatedAt, now()), '시간 전')
+						ELSE
+							CASE
+								WHEN
+									(timestampdiff(day, AccommodationReview.CreatedAt, now()) < 8)
+								THEN
+									concat(timestampdiff(day, AccommodationReview.CreatedAt, now()), '일 전')
+								ELSE
+									AccommodationReview.CreatedAt
+							END
+					END
+			END
+		END as WrittenTime,
     CASE
         WHEN
             AccommodationReview.IsPhotoReview = 'Y'
@@ -298,7 +537,16 @@ function getPhotoReviewsNewOrder($AccomIdx)
 			(SELECT ReplyText
 				FROM ReviewReply
 			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
-	END as ReviewReply
+	END as ReviewReply,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT CreatedAt
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx
+            AND ReviewReply.IsDeleted = 'N')
+	END as ReplyWrittenTime
 FROM
     AccommodationReview
         JOIN
@@ -335,7 +583,35 @@ function getPhotoReviewsRatingHigh($AccomIdx)
     UR.ReserveType,
     AccommodationReview.ReviewContent,
     AccommodationReview.OverallRating,
-    AccommodationReview.CreatedAt,
+	CASE
+		WHEN
+			(timestampdiff(second, AccommodationReview.CreatedAt, now()) < 60)
+		THEN
+			concat(timestampdiff(second, AccommodationReview.CreatedAt, now()), '초 전')
+		ELSE
+			CASE
+				WHEN
+					(timestampdiff(minute, AccommodationReview.CreatedAt, now()) < 60)
+				THEN
+					concat(timestampdiff(minute, AccommodationReview.CreatedAt, now()), '분 전')
+				ELSE
+					CASE
+						WHEN
+							(timestampdiff(hour, AccommodationReview.CreatedAt, now()) < 24)
+						THEN
+							concat(timestampdiff(hour, AccommodationReview.CreatedAt, now()), '시간 전')
+						ELSE
+							CASE
+								WHEN
+									(timestampdiff(day, AccommodationReview.CreatedAt, now()) < 8)
+								THEN
+									concat(timestampdiff(day, AccommodationReview.CreatedAt, now()), '일 전')
+								ELSE
+									AccommodationReview.CreatedAt
+							END
+					END
+			END
+		END as WrittenTime,
     CASE
         WHEN
             AccommodationReview.IsPhotoReview = 'Y'
@@ -355,7 +631,16 @@ function getPhotoReviewsRatingHigh($AccomIdx)
 			(SELECT ReplyText
 				FROM ReviewReply
 			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
-	END as ReviewReply
+	END as ReviewReply,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT CreatedAt
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx
+            AND ReviewReply.IsDeleted = 'N')
+	END as ReplyWrittenTime
 FROM
     AccommodationReview
         JOIN
@@ -366,7 +651,8 @@ FROM
     JOIN Reservation USING (UserIdx)) UR ON (UR.UserIdx = AccommodationReview.UserIdx
         AND UR.AccomIdx = AccommodationReview.AccomIdx)
 WHERE
-    AccommodationReview.AccomIdx = ? AND AccommodationReview.IsPhotoReview = 'Y'
+    AccommodationReview.AccomIdx = ?
+    AND AccommodationReview.IsPhotoReview = 'Y'
     AND AccommodationReview.IsDeleted = 'N'
 ORDER BY OverallRating DESC;";
 
@@ -391,7 +677,35 @@ function getPhotoReviewsRatingLow($AccomIdx)
     UR.ReserveType,
     AccommodationReview.ReviewContent,
     AccommodationReview.OverallRating,
-    AccommodationReview.CreatedAt,
+	CASE
+		WHEN
+			(timestampdiff(second, AccommodationReview.CreatedAt, now()) < 60)
+		THEN
+			concat(timestampdiff(second, AccommodationReview.CreatedAt, now()), '초 전')
+		ELSE
+			CASE
+				WHEN
+					(timestampdiff(minute, AccommodationReview.CreatedAt, now()) < 60)
+				THEN
+					concat(timestampdiff(minute, AccommodationReview.CreatedAt, now()), '분 전')
+				ELSE
+					CASE
+						WHEN
+							(timestampdiff(hour, AccommodationReview.CreatedAt, now()) < 24)
+						THEN
+							concat(timestampdiff(hour, AccommodationReview.CreatedAt, now()), '시간 전')
+						ELSE
+							CASE
+								WHEN
+									(timestampdiff(day, AccommodationReview.CreatedAt, now()) < 8)
+								THEN
+									concat(timestampdiff(day, AccommodationReview.CreatedAt, now()), '일 전')
+								ELSE
+									AccommodationReview.CreatedAt
+							END
+					END
+			END
+		END as WrittenTime,
     CASE
         WHEN
             AccommodationReview.IsPhotoReview = 'Y'
@@ -411,7 +725,16 @@ function getPhotoReviewsRatingLow($AccomIdx)
 			(SELECT ReplyText
 				FROM ReviewReply
 			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)
-	END as ReviewReply
+	END as ReviewReply,
+    CASE
+		WHEN
+			(SELECT EXISTS (Select ReviewIdx FROM ReviewReply WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx)) = 1
+		THEN
+			(SELECT CreatedAt
+				FROM ReviewReply
+			WHERE ReviewReply.ReviewIdx = AccommodationReview.ReviewIdx
+            AND ReviewReply.IsDeleted = 'N')
+	END as ReplyWrittenTime
 FROM
     AccommodationReview
         JOIN
@@ -840,6 +1163,23 @@ WHERE
 
     return $res;
 }
+
+function getBestReviewIdx($AccomIdx) {
+    $pdo = pdoSqlConnect();
+    $query = "SELECT ReviewIdx FROM BestReview 
+WHERE AccomIdx = ?";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res;
+}
+
 
 
 /*여기부턴 현재 베타
