@@ -14,7 +14,7 @@ date_default_timezone_set('Asia/Seoul');
 ini_set('default$Longtitude_charset', 'utf8mb4');
 
 //에러출력하게 하는 코드
-//error_reporting(E_ALL); ini_set("display_errors", 1);
+error_reporting(E_ALL); ini_set("display_errors", 1);
 
 //Main Server API
 $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) {
@@ -25,8 +25,8 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/motel-groups', ['IndexController', 'getMotelGroupList']);
     $r->addRoute('GET', '/motels', ['WoodieController', 'getMotels']);
     $r->addRoute('GET', '/motels/{accomIdx}', ['WoodieController', 'getMotelRooms']);
-    $r->addRoute('GET', '/motels/moneyInfo', ['WoodieController', 'getMotelMoneyInfo']);
-    $r->addRoute('GET', '/motels/sellerInfo', ['WoodieController', 'getMotelSellerInfo']);
+    $r->addRoute('GET', '/motel/moneyInfo', ['WoodieController', 'getMotelMoneyInfo']);
+    $r->addRoute('GET', '/motel/sellerInfo', ['WoodieController', 'getMotelSellerInfo']);
     $r->addRoute('GET', '/areas', ['WoodieController', 'getAreas']);
     $r->addRoute('POST', '/jwt', ['MainController', 'createJwt']);
     $r->addRoute('POST', '/users', ['IndexController', 'createUser']);
