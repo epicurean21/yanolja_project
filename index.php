@@ -32,6 +32,7 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/accoms/moneyInfo', ['WoodieController', 'getAccomMoneyInfo']);
     $r->addRoute('GET', '/accoms/sellerInfo', ['WoodieController', 'getAccomSellerInfo']);
     $r->addRoute('GET', '/areas', ['WoodieController', 'getAreas']);
+    $r->addRoute('GET', '/areas/{groupIdx}', ['WoodieController', 'getAccomByArea']);
     $r->addRoute('POST', '/jwt', ['MainController', 'createJwt']);
     $r->addRoute('POST', '/users', ['IndexController', 'createUser']);
 
@@ -61,6 +62,10 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
 
     $r->addRoute('POST', '/write-reviews', ['AccomController', 'postReviews']);
     $r->addRoute('GET', '/write-reviews', ['AccomController', 'postNewReviews']);
+
+    $r->addRoute('POST', '/pick', ['AccomController', 'updatePick']);
+    $r->addRoute('GET', '/pick', ['AccomController', 'getPickedAccom']);
+
 
 //    $r->addRoute('GET', '/users', 'get_all_users_handler');
 //    // {id} must be a number (\d+)

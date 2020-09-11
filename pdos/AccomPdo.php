@@ -809,7 +809,7 @@ function isAccomPicked($UserIdx, $AccomIdx)
 	SELECT UserIdx
     FROM UserPick
     WHERE AccomIdx = ? AND UserIdx = ? 
-    AND isDeleted = 'N') exist";
+    AND isDeleted = 'N') as exist";
 
     $st = $pdo->prepare($query);
     $st->execute([$AccomIdx, $UserIdx]);
@@ -820,6 +820,52 @@ function isAccomPicked($UserIdx, $AccomIdx)
     $pdo = null;
 
     return $res[0]['exist'];
+}
+
+function deleteAccomPicked($UserIdx, $AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+    $query = "UPDATE UserPick SET isDeleted = 'Y' 
+    WHERE (UserIdx = ?) and (AccomIdx = ?);";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$UserIdx, $AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+
+    $st = null;
+    $pdo = null;
+}
+
+function postAccomPick($UserIdx, $AccomIdx)
+{
+    $pdo = pdoSqlConnect();
+
+    $query = "SELECT EXISTS(
+	SELECT UserIdx
+    FROM UserPick
+    WHERE AccomIdx = ? AND UserIdx = ?) as exist";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx, $UserIdx]);
+
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $post = $st->fetchAll();
+    if(intval($post[0]['exist']) == 1) {
+        $query = "UPDATE UserPick SET isDeleted = 'N' 
+    WHERE (UserIdx = ?) and (AccomIdx = ?);";
+
+        $st = $pdo->prepare($query);
+        $st->execute([$UserIdx, $AccomIdx]);
+    } else {
+        $query = "INSERT INTO UserPick (UserIdx, AccomIdx)
+            VALUES (?, ?);";
+        $st = $pdo->prepare($query);
+        $st->execute([$UserIdx, $AccomIdx]);
+    }
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+
+    $st = null;
+    $pdo = null;
 }
 
 function getMotelRoom($AccomIdx, $CheckInDate)
@@ -1326,6 +1372,22 @@ function isValidReserveIdx($ReserveIdx, $UserIdx) {
     return $res[0]['exist'];
 }
 
+function isValidAcocmIdx($AccomIdx) {
+    $pdo = pdoSqlConnect();
+    $query = "select exists (select * from Accommodation Where AccomIdx = ?
+ AND Accommodation.IsDeleted = 'N') as exist;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$AccomIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+
+    return $res[0]['exist'];
+}
+
 
 function getReserveInfo($ReserveIdx) {
     $pdo = pdoSqlConnect();
@@ -1396,6 +1458,197 @@ VALUES (?, ?)";
 
     $st = null;
     $pdo = null;
+}
+
+
+function getPickedMotels($CheckInDate, $CheckOutDate, $UserIdx, $AdultNum, $ChildNum) {
+    $pdo = pdoSqlConnect();
+    $query = "
+SELECT 
+    *
+FROM
+(SELECT 
+AR1.AccomIdx,
+    AR1.AccomThumbnailUrl,
+    AR1.AccomName,
+    CASE
+        WHEN
+            (1 < DAYOFWEEK(?) AND 6 > DAYOFWEEK(?))
+        THEN
+            F1.WeekdayTime
+        ELSE F1.WeekendTime
+    END AS PartTime,
+    CASE
+        WHEN
+			(1 < DAYOFWEEK(?) AND 6 > DAYOFWEEK(?))
+        THEN
+            F1.MemberPartTimeWeekdayPrice
+        ELSE F1.MemberPartTimeWeekendPrice
+    END AS PartTimePrice,
+    CASE
+        WHEN
+            (1 < DAYOFWEEK(?) AND 6 > DAYOFWEEK(?))
+        THEN
+            F1.MemberAllDayWeekdayTime
+        ELSE F1.MemberAllDayWeekendTime
+    END AS AllDayTime,
+    CASE
+        WHEN
+           (1 < DAYOFWEEK(?) AND 6 > DAYOFWEEK(?))
+        THEN
+            F1.MemberAllDayWeekdayPrice
+        ELSE F1.MemberAllDayWeekendPrice
+    END AS AllDayPrice
+FROM 
+(SELECT Accommodation.AccomIdx, Accommodation.AccomName, Accommodation.AccomType, Accommodation.AccomIntroduction, Accommodation.AccomThumbnailUrl, Accommodation.AccomAddress,
+	Accommodation.AccomTheme, Accommodation.AccomGuide, Accommodation.ReserveInfo, Accommodation.AccomLatitude, Accommodation.AccomLongitude, Accommodation.isDeleted, UserPick.UserIdx
+FROM (Accommodation
+    JOIN UserPick USING (AccomIdx))) as AR1
+JOIN (
+SELECT * 
+FROM
+(
+SELECT * 
+FROM
+(SELECT PartTimeInfo.AccomIdx, PartTimeInfo.WeekdayTime, PartTimeInfo.WeekendTime, 
+		PartTimeInfo.MemberWeekdayTime, PartTimeInfo.MemberWeekendTime
+FROM PartTimeInfo) as P1 join 
+(Select 
+		PartTimePrice.AccomIdx as AccomIdx2,min(MemberPartTimeWeekdayPrice) as MemberPartTimeWeekdayPrice, min(MemberPartTimeWeekendPrice) as MemberPartTimeWeekendPrice
+	From
+		PartTimePrice
+	GROUP BY PartTimePrice.AccomIdx) as P2 ON (P1.AccomIdx = P2.AccomIdx2)
+GROUP BY P1.AccomIdx, P1.WeekdayTime, P1.WeekendTime, 
+		P1.MemberWeekdayTime, P1.MemberWeekendTime) T1
+JOIN
+(SELECT *
+FROM
+(
+SELECT AllDayInfo.AccomIdx as AccomIdx3, AllDayInfo.WeekdayTime as AllDayWeekdayTime, AllDayInfo.WeekendTime as AllDayWeekendTime, 
+		AllDayInfo.MemberWeekdayTime as MemberAllDayWeekdayTime, AllDayInfo.MemberWeekendTime as MemberAllDayWeekendTime
+FROM AllDayInfo) as A1 
+	join 
+(Select 
+		AllDayPrice.AccomIdx as AccomIdx4, min(MemberAllDayWeekdayPrice) as MemberAllDayWeekdayPrice, min(MemberAllDayWeekendPrice) as MemberAllDayWeekendPrice
+	From
+		AllDayPrice
+	GROUP BY AllDayPrice.AccomIdx) as A2 ON (A1.AccomIdx3 = A2.AccomIdx4)
+GROUP BY A1.AccomIdx3, A1.AllDayWeekdayTime, A1.AllDayWeekendTime, 
+		A1.MemberAllDayWeekdayTime, A1.MemberAllDayWeekendTime) T2 ON (T1.AccomIdx = T2.AccomIdx3)) F1
+        ON (AR1.AccomIdx = F1.AccomIdx)
+ WHERE
+	AR1.UserIdx = ?
+        AND AR1.AccomType = 'M'
+        AND AR1.isDeleted = 'N') AS a1 JOIN
+        (SELECT 
+        Accommodation.AccomIdx,
+            AVG(OverallRating) AS OverallRating,
+            COUNT(ReviewIdx) AS ReviewCount
+    FROM
+        Accommodation
+    JOIN AccommodationReview ON (Accommodation.AccomIdx = AccommodationReview.AccomIdx)
+    WHERE
+        Accommodation.Accomtype = 'M'
+            AND AccommodationReview.isDeleted = 'N'
+            AND Accommodation.isDeleted = 'N'
+    GROUP BY Accommodation.AccomIdx) AS a2 ON a1.AccomIdx = a2.AccomIdx;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$CheckInDate,$CheckInDate,$CheckInDate,$CheckInDate,$CheckInDate,$CheckInDate,
+        $CheckInDate,$CheckInDate, $UserIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+    return $res;
+}
+
+function getPickedHotels($CheckInDate, $CheckOutDate, $UserIdx, $AdultNum, $ChildNum) {
+    $pdo = pdoSqlConnect();
+    $query = "SELECT * from(SELECT 
+			AR1.AccomIdx,
+            AR1.AccomThumbnailUrl,
+            AR1.AccomName,
+            CASE
+                WHEN
+                    (1 < DAYOFWEEK(?) AND 6 > DAYOFWEEK(?))
+                THEN
+                    F1.MemberAllDayWeekdayTime
+                ELSE F1.MemberAllDayWeekendTime
+            END AS AllDayTime,
+            CASE
+                WHEN
+                   (1 < DAYOFWEEK(?) AND 6 > DAYOFWEEK(?))
+                THEN
+                    F1.MemberAllDayWeekdayPrice
+                ELSE F1.MemberAllDayWeekendPrice
+            END AS AllDayPrice
+    FROM
+        (SELECT 
+            Accommodation.AccomIdx,
+            Accommodation.AccomName,
+            Accommodation.AccomType,
+            Accommodation.AccomIntroduction,
+            Accommodation.AccomThumbnailUrl,
+            Accommodation.AccomAddress,
+            Accommodation.AccomTheme,
+            Accommodation.AccomGuide,
+            Accommodation.ReserveInfo,
+            Accommodation.isDeleted,
+            UserPick.UserIdx
+    FROM
+        (Accommodation
+    JOIN UserPick USING (AccomIdx))) AS AR1
+    JOIN (SELECT 
+        *
+    FROM
+        (SELECT 
+        *
+    FROM
+        (SELECT 
+        AllDayInfo.AccomIdx AS AccomIdx3,
+            AllDayInfo.WeekdayTime AS AllDayWeekdayTime,
+            AllDayInfo.WeekendTime AS AllDayWeekendTime,
+            AllDayInfo.MemberWeekdayTime AS MemberAllDayWeekdayTime,
+            AllDayInfo.MemberWeekendTime AS MemberAllDayWeekendTime
+    FROM
+        AllDayInfo) AS A1
+    JOIN (SELECT 
+        AllDayPrice.AccomIdx AS AccomIdx4,
+            MIN(MemberAllDayWeekdayPrice) AS MemberAllDayWeekdayPrice,
+            MIN(MemberAllDayWeekendPrice) AS MemberAllDayWeekendPrice
+    FROM
+        AllDayPrice
+    GROUP BY AllDayPrice.AccomIdx) AS A2 ON (A1.AccomIdx3 = A2.AccomIdx4)
+    GROUP BY A1.AccomIdx3 , A1.AllDayWeekdayTime , A1.AllDayWeekendTime , A1.MemberAllDayWeekdayTime , A1.MemberAllDayWeekendTime) as D1) as F1 ON (AR1.AccomIdx = F1.AccomIdx3)
+    WHERE
+		AR1.UserIdx = ?
+            AND AR1.AccomType = 'H'
+            AND AR1.isDeleted = 'N') AS a1
+        JOIN
+    (SELECT 
+        Accommodation.AccomIdx,
+            AVG(OverallRating) AS OverallRating,
+            COUNT(ReviewIdx) AS ReviewCount
+    FROM
+        Accommodation
+    JOIN AccommodationReview ON (Accommodation.AccomIdx = AccommodationReview.AccomIdx)
+    WHERE
+        Accommodation.Accomtype = 'H'
+            AND AccommodationReview.isDeleted = 'N'
+            AND Accommodation.isDeleted = 'N'
+    GROUP BY Accommodation.AccomIdx) AS a2 ON a1.AccomIdx = a2.AccomIdx;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$CheckInDate,$CheckInDate,
+        $CheckInDate,$CheckInDate, $UserIdx]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = null;
+    $pdo = null;
+    return $res;
 }
 
 /*여기부턴 현재 베타

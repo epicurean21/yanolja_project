@@ -560,6 +560,99 @@ try {
             $res->Message = "리뷰를 성공적으로 작성하였습니다";
             echo json_encode($res, JSON_NUMERIC_CHECK);
             break;
+
+        case "updatePick":
+            http_response_code(200);
+            $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
+            if($jwt == null) {
+                $res->isSuccess = FALSE;
+                $res->code = 400;
+                $res->message = "로그인이 되어있지 않습니다";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                break;
+            }
+            else {
+                if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    $res->IsSuccess = FALSE;
+                    $res->Code = 401;
+                    $res->Message = "유효하지 않은 토큰입니다";
+                    echo json_encode($res, JSON_NUMERIC_CHECK);
+                    return;
+                }
+                else {
+                    $data = getDataByJWToken($jwt, JWT_SECRET_KEY);
+                    $UserIdx = getUserIdx($data->id);
+                    $AccomIdx = 0;
+                    if($req->AccomIdx == null) {
+                        $res->isSuccess = FALSE;
+                        $res->code = 402;
+                        $res->message = "숙소 인덱스를 올바르게 입력해주세요";
+                        echo json_encode($res, JSON_NUMERIC_CHECK);
+                        break;
+                    }
+                    else {
+                        $AccomIdx = $req->AccomIdx;
+                    }
+                    if(!isValidAccomIdx($AccomIdx)) {
+                        $res->isSuccess = FALSE;
+                        $res->code = 403;
+                        $res->message = "존재하지 않는 숙소입니다";
+                        echo json_encode($res, JSON_NUMERIC_CHECK);
+                        break;
+                    }
+
+
+                    if (isAccomPicked($UserIdx, $AccomIdx)) {
+                        deleteAccomPicked($UserIdx, $AccomIdx);
+                        $res->isSuccess = true;
+                        $res->code = 200;
+                        $res->message = "숙소 찜을 취소했습니다";
+                        echo json_encode($res, JSON_NUMERIC_CHECK);
+                        break;
+                    } else {
+                        postAccomPick($UserIdx, $AccomIdx);
+                        $res->isSuccess = true;
+                        $res->code = 200;
+                        $res->message = "숙소를 찜하였습니다";
+                        echo json_encode($res, JSON_NUMERIC_CHECK);
+                        break;
+                    }
+                }
+            }
+            break;
+
+        case "getPickedAccom":
+            http_response_code(200);
+            $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
+            $UserIdx = 0;
+            if($jwt == null) {
+                $res->isSuccess = FALSE;
+                $res->code = 400;
+                $res->message = "로그인이 되어있지 않습니다";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                break;
+            }
+            else {
+                if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    $res->IsSuccess = FALSE;
+                    $res->Code = 401;
+                    $res->Message = "유효하지 않은 토큰입니다";
+                    echo json_encode($res, JSON_NUMERIC_CHECK);
+                    return;
+                }
+                else {
+                    $data = getDataByJWToken($jwt, JWT_SECRET_KEY);
+                    $UserIdx = getUserIdx($data->id);
+                }
+            }
+
+            $res->result->Motels = getPickedMotels($_GET['CheckInDate'], $_GET['CheckOutDate'], $UserIdx, $_GET['AdultNum'], $_GET['ChildNum']);
+            $res->result->Hotles = getPickedHotels($_GET['CheckInDate'], $_GET['CheckOutDate'], $UserIdx, $_GET['AdultNum'], $_GET['ChildNum']);
+            $res->isSuccess = TRUE;
+            $res->code = 200;
+            $res->message = "찜한 숙소 불러오기 성공";
+            echo json_encode($res, JSON_NUMERIC_CHECK);
+            break;
     }
 
 } catch (\Exception $e) {

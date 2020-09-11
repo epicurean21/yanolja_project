@@ -65,11 +65,11 @@ try {
             }
 
             // 필수키체크
-            keyCheck('startAt', $_GET);
-            keyCheck('endAt', $_GET);
-            keyCheck('motelGroupIdx', $_GET);
-            keyCheck('adult', $_GET);
-            keyCheck('child', $_GET);
+            isValidKey('startAt', $_GET);
+            isValidKey('endAt', $_GET);
+            isValidKey('motelGroupIdx', $_GET);
+            isValidKey('adult', $_GET);
+            isValidKey('child', $_GET);
 
 
             // 유효성검사
@@ -121,11 +121,11 @@ try {
             }
 
             // 필수키체크
-            keyCheck('startAt', $_GET);
-            keyCheck('endAt', $_GET);
-            keyCheck('hotelGroupIdx', $_GET);
-            keyCheck('adult', $_GET);
-            keyCheck('child', $_GET);
+            isValidKey('startAt', $_GET);
+            isValidKey('endAt', $_GET);
+            isValidKey('hotelGroupIdx', $_GET);
+            isValidKey('adult', $_GET);
+            isValidKey('child', $_GET);
 
             // 유효성 검사
             if(!isValidHotelGroupIdx($_GET['hotelGroupIdx'])){
@@ -176,11 +176,11 @@ try {
 
 
             // 필수키체크
-            keyCheck('startAt', $_GET);
-            keyCheck('endAt', $_GET);
-            keyCheck('motelGroupIdx', $_GET);
-            keyCheck('adult', $_GET);
-            keyCheck('child', $_GET);
+            isValidKey('startAt', $_GET);
+            isValidKey('endAt', $_GET);
+            isValidKey('motelGroupIdx', $_GET);
+            isValidKey('adult', $_GET);
+            isValidKey('child', $_GET);
 
             // 유효성검사
             if(!isValidMotelGroupIdx($_GET['motelGroupIdx'])){
@@ -267,11 +267,11 @@ try {
             }
 
             // 필수키체크
-            keyCheck('startAt', $_GET);
-            keyCheck('endAt', $_GET);
-            keyCheck('hotelGroupIdx', $_GET);
-            keyCheck('adult', $_GET);
-            keyCheck('child', $_GET);
+            isValidKey('startAt', $_GET);
+            isValidKey('endAt', $_GET);
+            isValidKey('hotelGroupIdx', $_GET);
+            isValidKey('adult', $_GET);
+            isValidKey('child', $_GET);
 
             // 유효성 검사
             if(!isValidHotelGroupIdx($_GET['hotelGroupIdx'])){
@@ -353,10 +353,10 @@ try {
             }
 
             // 필수키체크
-            keyCheck('startAt', $_GET);
-            keyCheck('endAt', $_GET);
-            keyCheck('accomIdx', $_GET);
-            keyCheck('roomIdx', $_GET);
+            isValidKey('startAt', $_GET);
+            isValidKey('endAt', $_GET);
+            isValidKey('accomIdx', $_GET);
+            isValidKey('roomIdx', $_GET);
 
             // AccomIdx 유효성 검사
             if(!isValidAccomIdx($_GET['accomIdx'])){
@@ -418,7 +418,7 @@ try {
             }
 
             // 필수 키 체크
-            keyCheck('accomIdx', $_GET);
+            isValidKey('accomIdx', $_GET);
 
             // AccomIdx 유효성 검사
             if(!isValidAccomIdx($_GET['accomIdx'])){
@@ -480,7 +480,7 @@ try {
             }
 
             // 필수 키 체크
-            keyCheck('accomIdx', $_GET);
+            isValidKey('accomIdx', $_GET);
 
             // AccomIdx 유효성 검사
             if(!isValidAccomIdx($_GET['accomIdx'])){
@@ -535,6 +535,52 @@ try {
             $res->message = "하단 네비게이션바 지역별 목록 불러오기 성공";
             echo json_encode($res, JSON_NUMERIC_CHECK);
             break;
+
+
+
+        /*
+         * 하단 네비게이션 바 지역별 버튼 클릭시 지역별 그룹리스트 출력
+         */
+        case "getAccomByArea":
+            http_response_code(200);
+
+            // 1. 토큰여부로 회원/비회원 검사 => 요금/시간 차등 적용
+            if (array_key_exists('HTTP_X_ACCESS_TOKEN', $_SERVER)){
+
+                // 1-1. 토큰있으면, 유효성 검사
+                $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
+
+                if (!isValidHeader($jwt, JWT_SECRET_KEY)) {
+                    http_response_code(400);
+                    $res->isSuccess = FALSE;
+                    $res->code = 400;
+                    $res->message = "유효하지 않은 토큰입니다";
+                    echo json_encode($res, JSON_NUMERIC_CHECK);
+                    addErrorLogs($errorLogs, $res, $req);
+                    return;
+                }
+                $isMember = true;
+            }
+            else {
+                // 2. 토큰 없으면 비회원
+                $isMember = false;
+            }
+
+            // 필수키체크
+            isValidKey('groupIdx', $_GET);
+            isValidKey('adult', $_GET);
+            isValidKey('child', $_GET);
+            isValidKey('startAt', $_GET);
+            isValidKey('endAt', $_GET);
+            
+            $res->isSuccess = TRUE;
+            $res->code = 200;
+            $res->message = "하단 네비게이션바 지역별 숙소 불러오기 성공";
+            $res->result = getAccomByArea($vars["groupIdx"], $isMember, $_GET['startAt'], $_GET['endAt'], $_GET['adult'], $_GET['child']);
+
+            echo json_encode($res, JSON_NUMERIC_CHECK);
+            break;
+
 
     }
 } catch (\Exception $e) {
